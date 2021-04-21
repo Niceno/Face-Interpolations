@@ -1,6 +1,8 @@
-rc_standard
+RC_Standard_From_Matrix
 
-# Options are:
-# linear
-# rc_standard
+# Valid options are:
+Linear_From_Velocities
+Linear_From_Matrix
+RC_Standard_From_Velocities
+RC_Standard_From_Matrix
 
