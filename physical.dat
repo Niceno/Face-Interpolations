@@ -1,0 +1,9 @@
+# Physical properties are listed in the following order:
+# 1. rho_water
+# 2. rho_air
+# 3. mu_water
+# 4. mu_air
+1000.0
+   1.0
+   1.0e-3
+   1.0e-3
