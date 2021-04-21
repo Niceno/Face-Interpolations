@@ -321,12 +321,6 @@ for k = 1:n_steps
 
   end
 
-  o_res = [o_res, sqrt(dot((u_c-u_c_o), (u_c-u_c_o)))];
-  printf('Outer loop residual %E\n', o_res(end));
-  if(o_res(end) < o_tol)
-    break;
-  end
-
   % Plot transient solutions
   if(mod(k, step_plot_int) == 0)
     plot_var(fig_a, 1, x_c,  u_c,  'Cell Velocity',       k/step_plot_int);
@@ -334,6 +328,14 @@ for k = 1:n_steps
     plot_var(fig_a, 3, x_c,  pp_c, 'Pressure Correction', k/step_plot_int);
     plot_var(fig_a, 4, x_c,  p_c,  'Pressure',            k/step_plot_int);
   end
+
+  % Check if steady state has been reached
+  o_res = [o_res, sqrt(dot((u_c-u_c_o), (u_c-u_c_o)))];
+  printf('Outer loop residual %E\n', o_res(end));
+  if(o_res(end) < o_tol)
+    break;
+  end
+
 end
 
 % Plot final solution
