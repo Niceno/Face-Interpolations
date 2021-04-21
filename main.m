@@ -157,7 +157,8 @@ if(iter_plot_int > 0)
   end
 end
 if(step_plot_int > 0)
-  fig_a = figure('Name', ['Transients With ', strrep(algor, '_', ' ')]);
+  fig_a = figure('Name', ['Transients With ', strrep(algor, '_', ' '),  ...;
+                          ' and dt=', mat2str(dt)]);
 end
 
 % Initialize array for residuals in time step
@@ -336,7 +337,8 @@ for k = 1:n_steps
 end
 
 % Plot final solution
-fig_f = figure('Name', ['Final Solution With ', strrep(algor, '_', ' ')]);
+fig_f = figure('Name', ['Final Solution With ', strrep(algor, '_', ' '), ...
+                        ' and dt=', mat2str(dt)]);
 plot_var(fig_f, 1, x_c,  u_c,  'Cell Velocity',       1);
 plot_var(fig_f, 2, x_if, u_if, 'Face Velocity',       1);
 plot_var(fig_f, 3, x_c,  pp_c, 'Pressure Correction', 1);
