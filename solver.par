@@ -1,25 +1,29 @@
 # Solver parameters are listed in the following order:
+#--[ time stepping related]
 # dt            = par(1);   % time step
 # n_steps       = par(2);   % number of time steps
-# step_plot_int = par(3);   % plot interval for time steps
+# step_plot_int = par(3);   % plot interval for time steps, 0 to skip
+#--[ simple algorithm related ]
 # n_iters       = par(4);   % number of simple iterations
-# iter_plot_int = par(5);   % plot interval for iterations
+# iter_plot_int = par(5);   % plot interval for iterations, 0 to skip
 # o_tol         = par(6);   % outer (time step) loop tolerance
+#--[ momentum equation related]
 # urf_u         = par(7);   % under-relaxation factor for momentum
 # u_iters       = par(8);   % number of iterations for momentum solver
 # tol_u         = par(9);   % tolerance for momentum solver
+#--[ momentum equation related]
 # urf_p         = par(10);  % under-relaxation factor for pressure
 # p_iters       = par(11);  % number of iterations for pressure solver
 # tol_p         = par(12);  % tolerance for pressure solver
    1.0e-1
-1200
-  10
+ 120
+  20
    6
-   1
+   0
    1.0e-6
    0.7
   24
-   1.0e-3
+   1.0e-9
    0.3
   60
-   1.0e-6
+   1.0e-12
