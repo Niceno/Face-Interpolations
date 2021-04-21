@@ -1,9 +1,10 @@
 %===============================================================================
-% Performs simple linear interpolation of velocities at faces
+% Performs Rhie and Chow interpolation of velocities at faces
+% This is how it was done in T-Flows when I started to work on surface tracking
 %-------------------------------------------------------------------------------
-function [u_if, u_af] = face_interpolation_01_rc_standard(  \
-                        u_c, p_c, p_x,                      \
-                        x_c, dv, a_u)
+function [u_if, u_af] = flux_03_rc_standard_from_velocities(  ...
+                        x_c, dv, a_u,                         ...
+                        u_c, p_c, p_x)
 
   % Unit for velocity m^3 * s / kg * kg/(m^2 s^2) = m / s
 
