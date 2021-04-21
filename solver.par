@@ -1,29 +1,28 @@
-# Solver parameters are listed in the following order:
-#--[ time stepping related]
-# dt            = par(1);   % time step
-# n_steps       = par(2);   % number of time steps
-# step_plot_int = par(3);   % plot interval for time steps, 0 to skip
-#--[ simple algorithm related ]
-# n_iters       = par(4);   % number of simple iterations
-# iter_plot_int = par(5);   % plot interval for iterations, 0 to skip
-# o_tol         = par(6);   % outer (time step) loop tolerance
-#--[ momentum equation related]
-# urf_u         = par(7);   % under-relaxation factor for momentum
-# u_iters       = par(8);   % number of iterations for momentum solver
-# tol_u         = par(9);   % tolerance for momentum solver
-#--[ momentum equation related]
-# urf_p         = par(10);  % under-relaxation factor for pressure
-# p_iters       = par(11);  % number of iterations for pressure solver
-# tol_p         = par(12);  % tolerance for pressure solver
+#--------[ time stepping related ]--------
+# (1) dt,            time step
+# (2) n_steps,       number of time steps
+# (3) step_plot_int, unsteady results plotting interval (0 to skip)
    1.0e-1
- 120
-  20
+1200
+ 100
+#--------[ simple algorithm related ]--------
+# (4) n_iters,       number of iterations in simple algorithm
+# (5) iter_plot_int, iteration plotting interval (0 to skip)
+# (6) o_tol,         outer iteration tolerance
    6
    0
    1.0e-6
+#--------[ momentum equation related ]--------
+# (7) urf_u,   under-relaxation factor for momentum
+# (8) u_iters, number of iterations for momentum solver
+# (9) tol_u,   tolerance for momentum solver
    0.7
-  24
-   1.0e-9
+  60
+   1.0e-12
+#--------[ pressure equation related ]--------
+# (10) urf_p,   under-relaxation factor for pressure
+# (11) p_iters, number of iterations for pressure solver
+# (12) tol_p,  tolerance for pressure solver
    0.3
   60
    1.0e-12
