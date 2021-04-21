@@ -1,0 +1,74 @@
+ANALYSIS 001                                              April 21, 14:20 CET
+
+This is the first time I have, to an extent, useful version of the scripts.
+Maybe the first thing to try is to see what is the minimum solver tolerance
+to be used.
+
+I was running the case with algorithm "RC_Standard_From_Matrix".  It turns
+out that residuals fall monothonically if residuals for momentum and pressure
+are six orders of magnitude smaller than outer (SIMPLE) residuals.  (Four and
+five orders of magnitude might pull it, but just.)
+
+In any case, solver.par file which worked for the above case reads:
+
+#--------[ time stepping related ]--------
+# (1) dt,            time step
+# (2) n_steps,       number of time steps
+# (3) step_plot_int, unsteady results plotting interval (0 to skip)
+   1.0e-1
+1200
+ 100
+#--------[ simple algorithm related ]--------
+# (4) n_iters,       number of iterations in simple algorithm
+# (5) iter_plot_int, iteration plotting interval (0 to skip)
+# (6) o_tol,         outer iteration tolerance
+   6
+   0
+   1.0e-6
+#--------[ momentum equation related ]--------
+# (7) urf_u,   under-relaxation factor for momentum
+# (8) u_iters, number of iterations for momentum solver
+# (9) tol_u,   tolerance for momentum solver
+   0.7
+  60
+   1.0e-12
+#--------[ pressure equation related ]--------
+# (10) urf_p,   under-relaxation factor for pressure
+# (11) p_iters, number of iterations for pressure solver
+# (12) tol_p,  tolerance for pressure solver
+   0.3
+  60
+   1.0e-12
+
+OK, wanna try the other algorythms with above settings to see if they will
+converge too.
+
+a) Trying with "Linear_From_Velocities".  This failed to converge.  Please
+   the convergence history in: analysis_001_a_linear_from_velocities.png
+
+b) Trying with "Linear_From_matrix".  This also failed to converge.  Please
+   the convergence history in: analysis_001_b_linear_from_matrix.png
+
+c) Trying with "RC_Standard_From_Velocities".  This converged after 256 step.
+   Convergence history is in: analysis_001_c_rc_standard_from_velocities.png
+
+d) Trying with "RC_Standard_From_Matrix".  This converged after 256 step.
+   Convergence history is in: analysis_001_d_rc_standard_from_matrix.png
+
+OK, fine.  What this analysis showed is that:
+
+1. There are very small differences in interpolations "from velocities" and
+   "from matrix".  The latter one seems to give more control over the
+   algorithm, I think, so I considered it the preferred option for the
+   time being.
+
+2. Solutions with linear interpolations are very slow to converge.  Although
+   the amplitude of oscialltions they create is not bigger than with Rhie
+   and Chow, this is not the way to continue, really.
+
+3. The results are rather strange and worrissome to extent.  The final results
+   for analysis b) and d) are in figures:
+   analysis_001_e_results_linear_from_matrix.png, and
+   analysis_001_f_results_rc_standard_from_matrix.png
+
+
