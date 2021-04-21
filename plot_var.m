@@ -10,7 +10,7 @@ function b = plot_var(fig, sub, x, p, name, iter)
   subplot(2,2, sub);
 
   % Plot what you want ...
-  plot(x, p, '-*');
+  plot(x, p, '-o');
 
   % ... and give it a title
   title(name);
