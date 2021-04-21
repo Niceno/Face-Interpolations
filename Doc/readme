@@ -52,7 +52,7 @@ b) Trying with "Linear_From_matrix".  This also failed to converge.  Please
 c) Trying with "RC_Standard_From_Velocities".  This converged after 256 step.
    Convergence history is in: analysis_001_c_rc_standard_from_velocities.png
 
-d) Trying with "RC_Standard_From_Matrix".  This converged after 256 step.
+d) Trying with "RC_Standard_From_Matrix".  This converged after 253 step.
    Convergence history is in: analysis_001_d_rc_standard_from_matrix.png
 
 OK, fine.  What this analysis showed is that:
@@ -72,3 +72,81 @@ OK, fine.  What this analysis showed is that:
    analysis_001_f_results_rc_standard_from_matrix.png
 
 This will all be tagged as revision "analysis_001".
+
+--------------------------------------------------------------------------------
+
+ANALYSIS 002                                              April 21, 14:20 CET
+
+Gotta try the time step dependence too.  Will take the case
+"RC_Standard_From_Matrix" and will try with time steps: 0.001, 0.1, 10, 1000
+and 10000 (if all of them work).  File solver.par is the same as above,
+but with increased number of time steps (12000) and smaller saving frequency.
+
+a) Converged after time step 1270.  Saved results in analysis_002_a_dt_0.001.png
+   Also saved arrays for u_c and p_c in
+   - analysis_002_a_pressure.mat
+   - analysis_002_a_velocity.mat
+   if I ever want to re-load them and plot one next to another.
+
+b) Converged after time step 253.  Saved results in analysis_002_b_dt_0.1.png
+   Also saved arrays for u_c and p_c in
+   - analysis_002_b_pressure.mat
+   - analysis_002_b_velocity.mat
+   if I ever want to re-load them and plot one next to another.
+
+c) Converged after time step 19.  Saved results in analysis_002_c_dt_10.png
+   Also saved arrays for u_c and p_c in
+   - analysis_002_c_pressure.mat
+   - analysis_002_c_velocity.mat
+   if I ever want to re-load them and plot one next to another.
+
+   Important: This is the first time ever that I get linear (non step-wise)
+   pressure distribution in liquid phases.
+
+d) Converged after time step 20.  Saved results in analysis_002_d_dt_1000.png
+   Also saved arrays for u_c and p_c in
+   - analysis_002_d_pressure.mat
+   - analysis_002_d_velocity.mat
+
+   Important: Pressure distribution is still linear in liquid phases.
+
+e) Converged after time step 20.  Saved results in analysis_002_e_dt_100000.png
+   Also saved arrays for u_c and p_c in
+   - analysis_002_e_pressure.mat
+   - analysis_002_e_velocity.mat
+
+   Important: Pressure distribution is still linear in liquid phases.
+
+f) I have also compiled all .mat files (transforming them into .dat by replacing
+   spaces in newlines), and plotted in xmgrace.  Results of that analysis is in
+   files:
+   - analysis_002_f_all_pressures.agr
+   - analysis_002_f_all_pressures.png
+   - analysis_002_f_all_velocities.agr
+   - analysis_002_f_all_velocities.png
+
+   It is striking how similar these results are to what Menciger and Zun report
+
+Conclusions:
+
+1. There is dependency of results on time step.  This is good case to check if
+   Choi's correction will really work.
+
+2. After a certain time step pressure do show linear profiles in liquid, as
+   opposed to zig-zag it was getting before for smaller time step.  It is the
+   as Menciger and Zun report!
+
+3. Overall, the similarity of my results with those of Menciger and Zun is
+   striking, which is a good sign, means I didn't do anything very bad.
+
+This will all be tagged as revision "analysis_002".
+
+--------------------------------------------------------------------------------
+
+
+
+
+
+
+
+

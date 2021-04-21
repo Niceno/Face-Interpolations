@@ -2,9 +2,9 @@
 # (1) dt,            time step
 # (2) n_steps,       number of time steps
 # (3) step_plot_int, unsteady results plotting interval (0 to skip)
-   1.0e-1
-1200
- 100
+   1.0e+5
+12000
+  600
 #--------[ simple algorithm related ]--------
 # (4) n_iters,       number of iterations in simple algorithm
 # (5) iter_plot_int, iteration plotting interval (0 to skip)
