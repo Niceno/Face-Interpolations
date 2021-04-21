@@ -16,6 +16,40 @@
 %  dynamic viscosity:      [kg/(m s)]
 %
 %-------------------------------------------------------------------------------
+%
+%  Calling convention:
+%
+%  When calling other scripts, it would be good to have some conventions on
+%  the order of arguments, for the sake of consistency.  I might order them
+%  in terms of their actual accuracy. I might do like this:
+%
+%  1. Geometrical parameters (as firmly defined) from the essential to the
+%     derived ones, hence:
+%
+%     x_n, x_c, x_if, dx, dy, dz, dv
+%
+%  2. Time step, also very clearly defined
+%
+%     dt
+%
+%  3. Physical properties (which are less certain than physical dimensions,
+%     and are somehow interpolated on the grid), in the order:
+%
+%     rho_c, rho_if, rho_af, mu_c, mu_if, mu_af
+%
+%  4. Under-relaxation factors
+%
+%     urf_u, urf_p
+%
+%  5. Matrices and right hand sides (since they depend on physical properties
+%     and discretization methods) in the order:
+%
+%     a_u, t_u, a_p, f_c, b_u, b_p
+%
+%  6. Unknowns, as the least accurate, come last
+%
+%     u_c, u_c_o, u_if, u_af, p_c
+%-------------------------------------------------------------------------------
 clear;
 
 g = 10.0;  % gravitational constant
@@ -40,7 +74,7 @@ tol_p         = par(12);  % tolerance for pressure solver
 %------------------------------
 % Face interpolation algorithm
 %------------------------------
-fid = fopen('face_algorithm.def','r');
+fid = fopen('algorithms.def','r');
 algor = fgetl(fid);
 fclose(fid);
 
@@ -110,23 +144,33 @@ p_x = gradient_p(x_c, p_c);  % for pressure gradients
 %---------------------------------------
 % Variables related to plotting results
 %---------------------------------------
-% fig_u = figure('Name', 'Velocity Iterations');
-% fig_p = figure('Name', 'Pressure Iterations');
-fig_a = figure('Name', ['Transients With ', algor]);
-fig_f = figure('Name', ['Final Solution With ', algor]);
 
+% Figures for iterations
 iter_leg = [];
+if(iter_plot_int > 0)
+  fig_u = figure('Name', 'Velocity Iterations');
+  fig_p = figure('Name', 'Pressure Iterations');
+  for i = 1:n_iters
+    if(mod(i, iter_plot_int) == 0)
+      iter_leg = [iter_leg; sprintf("iter %d", i)];
+    end
+  end
+end
+
+% Figures for time steps
 step_leg = [];
-for i = 1:n_iters
-  if(mod(i, iter_plot_int) == 0)
-    iter_leg = [iter_leg; sprintf("iter %d", i)];
+if(step_plot_int > 0)
+  fig_a = figure('Name', ['Transients With ', algor]);
+  fig_f = figure('Name', ['Final Solution With ', algor]);
+  for i = 1:n_steps
+    if(mod(i, step_plot_int) == 0)
+      step_leg = [step_leg; sprintf("step %d", i)];
+    end
   end
 end
-for i = 1:n_steps
-  if(mod(i, step_plot_int) == 0)
-    step_leg = [step_leg; sprintf("step %d", i)];
-  end
-end
+
+% Initialize array for residuals in time step
+o_res = [];
 
 %----------------------
 %
@@ -136,12 +180,13 @@ end
 for k = 1:n_steps
 
   printf("#========================\n");
-  printf("#\n");
-  printf("# Time Step: %d\n", k);
-  printf("#\n");
+  printf("#                        \n");
+  printf("# Time Step: %d          \n", k);
+  printf("#                        \n");
   printf("#========================\n");
   % Store the last time step as old
-  u_o = u_c;
+
+  u_c_o = u_c;
 
   %----------------------------
   %
@@ -154,14 +199,14 @@ for k = 1:n_steps
     % Discretize momentum equations
     %-------------------------------
     % Unit for a_u is kg/s (see inside function for details)
-    a_u = discretize_u(x_n, x_c, dx, dy, dz, rho_c, mu_if, dt);
+    [a_u, t_u] = discretize_u(x_n, x_c, dx, dy, dz, dt, rho_c, mu_if);
     b_u(1:n_c) = 0.0;
 
     %------------------------------------------
     % Add unsteady term to the right hand side
     %------------------------------------------
     % Unit for unstead term: kg/(m^3) * m^3 * m / s / s = kg m/s^2
-    b_u = b_u + rho_c .* dv .* u_o / dt;
+    b_u = b_u + rho_c .* dv .* u_c_o / dt;
 
     %------------------------------------------
     % Add pressure terms to momentum equations
@@ -173,7 +218,8 @@ for k = 1:n_steps
     % Cell centered buoyancy terms (that's wrong they say)
     %------------------------------------------------------
     % Unit for b_u is: m/s^2 * kg/m^3 * m^3 = kg m/s^2 = N
-    b_u = b_u + g * rho_c .* dv;
+    f_c = g * rho_c;        % kg/m^3 * m/s^2 = kg/(m^2 s^2) = N/m^3
+    b_u = b_u + f_c .* dv;
 
     % Under-relax momentum equations
     for i=1:n_c
@@ -187,7 +233,7 @@ for k = 1:n_steps
     % Units for velocity are: kg m/s^2 * s/kg = m/s
     u_c = pcg(a_u, b_u', tol_u, u_iters, [], [], u_c')';  % size = [1, n_c]
 
-    if(exist('fig_u', 'var') == 1)
+    if(exist('fig_u', 'var') == 1 && mod(iter, iter_plot_int) == 0)
       plot_var(fig_u, 1, x_c, u_c, 'Cell Velocity Before Correction', iter);
     end
 
@@ -203,12 +249,20 @@ for k = 1:n_steps
 
     % Perform interpolation at a cell face
     switch(algor)
-      case 'linear'
-        [u_if, u_af] = face_interpolation_00_linear(u_c);
-      case 'rc_standard'
-        [u_if, u_af] = face_interpolation_01_rc_standard(  \
-                       u_c, p_c, p_x,                      \
-                       x_c, dv, a_u);
+      case 'Linear_From_Velocities'
+        [u_if, u_af] = flux_01_linear_from_velocities(u_c);
+      case 'Linear_From_Matrix'
+        [u_if, u_af] = flux_02_linear_from_matrix(           ...
+                       dv, urf_u, a_u, t_u, f_c,             ...
+                       u_c, u_c_o, p_x);
+      case 'RC_Standard_From_Velocities'
+        [u_if, u_af] = flux_03_rc_standard_from_velocities(  ...
+                       x_c, dv, a_u,                         ...
+                       u_c, p_c, p_x);
+      case 'RC_Standard_From_Matrix'
+        [u_if, u_af] = flux_04_rc_standard_from_matrix(      ...
+                       x_c, dv, urf_u, a_u, t_u, f_c,        ...
+                       u_c, u_c_o, p_c, p_x);
       otherwise
         do_something_completely_different ();
     end
@@ -216,7 +270,7 @@ for k = 1:n_steps
     % Unit for b_p is: kg/m^3 * m/s * m^2 = kg/s
     b_p = -diff(rho_af .* u_af) .* dy .* dz;
 
-    if(exist('fig_u', 'var') == 1)
+    if(mod(iter, iter_plot_int) == 0)
       plot_var(fig_u, 2, x_if, u_if, 'Face Velocity Before Correction', iter);
     end
 
@@ -226,7 +280,7 @@ for k = 1:n_steps
     % Units for pressure are: kg/s / (ms) = kg/(m s^2)
     pp_c = pcg(a_p, b_p', tol_p, p_iters, [], [], pp_c')';  % size = [1, n_c]
 
-    if(exist('fig_p', 'var') == 1)
+    if(mod(iter, iter_plot_int) == 0)
       plot_var(fig_p, 1, x_c, pp_c, 'Pressure Correction', iter);
     end
 
@@ -236,7 +290,7 @@ for k = 1:n_steps
     % Unit for pressure: N/m^2 = kg m/s^2 / m^2 = kg/(m s^2)
     p_c = p_c + pp_c * urf_p;
 
-    if(exist('fig_p', 'var') == 1)
+    if(mod(iter, iter_plot_int) == 0)
       plot_var(fig_p, 2, x_c, p_c, 'Pressure', iter);
     end
 
@@ -246,7 +300,7 @@ for k = 1:n_steps
     p_x  = gradient_p(x_c, p_c);
     pp_x = gradient_p(x_c, pp_c);
 
-    if(exist('fig_p', 'var') == 1)
+    if(mod(iter, iter_plot_int) == 0)
       plot_var(fig_p, 3, x_c, p_x,  'Pressure Gradient', iter);
       plot_var(fig_p, 4, x_c, pp_x, 'Pressure Correction Gradient', iter);
     end
@@ -256,7 +310,7 @@ for k = 1:n_steps
     %-------------------------
     u_c = u_c - pp_x .* dv ./ spdiags(a_u, 0)';
 
-    if(exist('fig_u', 'var') == 1)
+    if(mod(iter, iter_plot_int) == 0)
       plot_var(fig_u, 3, x_c, u_c, 'Cell Velocity After Correction', iter);
     end
 
@@ -269,20 +323,20 @@ for k = 1:n_steps
       u_if(i) = u_if(i) + (pp_c(i+1) - pp_c(i)) * a_p(i,i+1) / (rho_if(i) * a_f);
     end
 
-    if(exist('fig_u', 'var') == 1)
+    if(mod(iter, iter_plot_int) == 0)
       plot_var(fig_u, 4, x_if, u_if, 'Face Velocity After Correction', iter);
     end
 
   end
 
-  o_res = sqrt(dot((u_c-u_o), (u_c-u_o)));
-  printf("Outer loop residual %E\n", o_res);
-  if(o_res < o_tol)
+  o_res = [o_res, sqrt(dot((u_c-u_c_o), (u_c-u_c_o)))];
+  printf("Outer loop residual %E\n", o_res(end));
+  if(o_res(end) < o_tol)
     break;
   end
 
   % Plot transient solutions
-  if(exist('fig_a', 'var') == 1 && mod(k, step_plot_int) == 0)
+  if(mod(k, step_plot_int) == 0)
     plot_var(fig_a, 1, x_c,  u_c,  'Cell Velocity',       k/step_plot_int);
     plot_var(fig_a, 2, x_if, u_if, 'Face Velocity',       k/step_plot_int);
     plot_var(fig_a, 3, x_c,  pp_c, 'Pressure Correction', k/step_plot_int);
@@ -291,17 +345,17 @@ for k = 1:n_steps
 end
 
 % Plot final solution
-if(exist('fig_f', 'var') == 1)
-  plot_var(fig_f, 1, x_c,  u_c,  'Cell Velocity',       1);
-  plot_var(fig_f, 2, x_if, u_if, 'Face Velocity',       1);
-  plot_var(fig_f, 3, x_c,  pp_c, 'Pressure Correction', 1);
-  plot_var(fig_f, 4, x_c,  p_c,  'Pressure',            1);
-end
+plot_var(fig_f, 1, x_c,  u_c,  'Cell Velocity',       1);
+plot_var(fig_f, 2, x_if, u_if, 'Face Velocity',       1);
+plot_var(fig_f, 3, x_c,  pp_c, 'Pressure Correction', 1);
+plot_var(fig_f, 4, x_c,  p_c,  'Pressure',            1);
 
 % Place legends to plots
-if(exist('fig_u', 'var') == 1)  figure(fig_u);  legend(iter_leg);  end
-if(exist('fig_p', 'var') == 1)  figure(fig_p);  legend(iter_leg);  end
+if(mod(iter, iter_plot_int) == 0)
+  figure(fig_u);  legend(iter_leg);
+  figure(fig_p);  legend(iter_leg);
+end
 
-if(exist('fig_a', 'var') == 1)
+if(step_plot_int > 0)
   figure(fig_a);  subplot(2,2,1);  legend(step_leg);
 end
