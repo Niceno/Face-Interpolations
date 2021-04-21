@@ -4,7 +4,7 @@
 # (3) step_plot_int, unsteady results plotting interval (0 to skip)
    1.0e+5
 12000
-  600
+   20
 #--------[ simple algorithm related ]--------
 # (4) n_iters,       number of iterations in simple algorithm
 # (5) iter_plot_int, iteration plotting interval (0 to skip)
