@@ -57,7 +57,7 @@ g = 10.0;  % gravitational constant
 %-------------------
 % Solver parameters
 %-------------------
-par = load("-ascii", "solver.par")
+par = load('-ascii', 'solver.par')
 dt            = par(1);   % time step
 n_steps       = par(2);   % number of time steps
 step_plot_int = par(3);   % plot interval for time steps
@@ -81,7 +81,7 @@ fclose(fid);
 %---------------------
 % Physical properties
 %---------------------
-dat = load("-ascii", "physical.dat")
+dat = load('-ascii', 'physical.dat')
 rho_water = dat(1);
 rho_air   = dat(2);
 mu_water  = dat(3);
@@ -90,7 +90,7 @@ mu_air    = dat(4);
 %-----------------------------------------------------
 % Read initial vof, it will also give number of cells
 %-----------------------------------------------------
-vof_c = load("-ascii", "vof.ini")';
+vof_c = load('-ascii', 'vof.ini')';
 n_c = size(vof_c, 2);
 
 %-----------------
@@ -152,21 +152,12 @@ if(iter_plot_int > 0)
   fig_p = figure('Name', 'Pressure Iterations');
   for i = 1:n_iters
     if(mod(i, iter_plot_int) == 0)
-      iter_leg = [iter_leg; sprintf("iter %d", i)];
+      iter_leg = [iter_leg; sprintf('iter %d', i)];
     end
   end
 end
-
-% Figures for time steps
-step_leg = [];
 if(step_plot_int > 0)
-  fig_a = figure('Name', ['Transients With ', algor]);
-  fig_f = figure('Name', ['Final Solution With ', algor]);
-  for i = 1:n_steps
-    if(mod(i, step_plot_int) == 0)
-      step_leg = [step_leg; sprintf("step %d", i)];
-    end
-  end
+  fig_a = figure('Name', ['Transients With ', strrep(algor, '_', ' ')]);
 end
 
 % Initialize array for residuals in time step
@@ -179,11 +170,11 @@ o_res = [];
 %----------------------
 for k = 1:n_steps
 
-  printf("#========================\n");
-  printf("#                        \n");
-  printf("# Time Step: %d          \n", k);
-  printf("#                        \n");
-  printf("#========================\n");
+  printf('#========================\n');
+  printf('#                        \n');
+  printf('# Time Step: %d          \n', k);
+  printf('#                        \n');
+  printf('#========================\n');
   % Store the last time step as old
 
   u_c_o = u_c;
@@ -330,7 +321,7 @@ for k = 1:n_steps
   end
 
   o_res = [o_res, sqrt(dot((u_c-u_c_o), (u_c-u_c_o)))];
-  printf("Outer loop residual %E\n", o_res(end));
+  printf('Outer loop residual %E\n', o_res(end));
   if(o_res(end) < o_tol)
     break;
   end
@@ -345,10 +336,18 @@ for k = 1:n_steps
 end
 
 % Plot final solution
+fig_f = figure('Name', ['Final Solution With ', strrep(algor, '_', ' ')]);
 plot_var(fig_f, 1, x_c,  u_c,  'Cell Velocity',       1);
 plot_var(fig_f, 2, x_if, u_if, 'Face Velocity',       1);
 plot_var(fig_f, 3, x_c,  pp_c, 'Pressure Correction', 1);
 plot_var(fig_f, 4, x_c,  p_c,  'Pressure',            1);
+
+% Plot residual history
+figure('Name', 'Residual History');
+x=[]; for i=1:size(o_res,2) x=[x, i]; end
+semilogy(x, o_res);
+title(['Convergence History With ', strrep(algor, '_', ' '), ...
+       ' and dt=', mat2str(dt)]);
 
 % Place legends to plots
 if(mod(iter, iter_plot_int) == 0)
@@ -357,5 +356,12 @@ if(mod(iter, iter_plot_int) == 0)
 end
 
 if(step_plot_int > 0)
+  step_leg = [];
+  for i = 1:k
+    if(mod(i, step_plot_int) == 0)
+      step_leg = [step_leg; sprintf('step %d', i)];
+    end
+  end
   figure(fig_a);  subplot(2,2,1);  legend(step_leg);
 end
+
