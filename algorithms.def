@@ -1,8 +1,8 @@
-RC_Standard_From_Matrix
+Rhie-Chow_Standard_From_Matrix
 
 # Valid options are:
 Linear_From_Velocities
 Linear_From_Matrix
-RC_Standard_From_Velocities
-RC_Standard_From_Matrix
+Rhie-Chow_Standard_From_Velocities
+Rhie-Chow_Standard_From_Matrix
 
