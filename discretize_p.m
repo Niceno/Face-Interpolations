@@ -17,24 +17,24 @@ function a_p = discretize_p(x_c, dy, dz, dv, a_u, rho_if)
   %-------------------
   % Inside the domain
   %-------------------
-  for i = 1:n_c
+  for c = 1:n_c
 
     % Units: kg/m^3 * m * m^3 * s/kg = m/s
 
     % East side
-    if(i < n_c)
-      d = 0.5 * (dy(i)*dz(i) + dy(i+1)*dz(i+1)) / (x_c(i+1) - x_c(i));
-      a = 0.5 * rho_if(i) * d * (dv(i) / a_u(i,i) + dv(i+1) / a_u(i+1, i+1));
-      a_p(i,i+1) = -a;
-      a_p(i,i)   =  a_p(i,i) + a;
+    if(c < n_c)
+      d = 0.5 * (dy(c)*dz(c) + dy(c+1)*dz(c+1)) / (x_c(c+1) - x_c(c));
+      a = 0.5 * rho_if(c) * d * (dv(c) / a_u(c,c) + dv(c+1) / a_u(c+1, c+1));
+      a_p(c,c+1) = -a;
+      a_p(c,c)   =  a_p(c,c) + a;
     end
 
     % West side
-    if(i > 1)
-      d = 0.5 * (dy(i)*dz(i) + dy(i-1)*dz(i-1)) / (x_c(i) - x_c(i-1));
-      a = 0.5 * rho_if(i-1) * d * (dv(i) / a_u(i,i) + dv(i-1) / a_u(i-1, i-1));
-      a_p(i,i-1) = -a;
-      a_p(i,i)   =  a_p(i,i) + a;
+    if(c > 1)
+      d = 0.5 * (dy(c)*dz(c) + dy(c-1)*dz(c-1)) / (x_c(c) - x_c(c-1));
+      a = 0.5 * rho_if(c-1) * d * (dv(c) / a_u(c,c) + dv(c-1) / a_u(c-1, c-1));
+      a_p(c,c-1) = -a;
+      a_p(c,c)   =  a_p(c,c) + a;
     endif
 
   end

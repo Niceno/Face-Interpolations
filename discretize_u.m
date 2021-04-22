@@ -19,14 +19,14 @@ function [a_u, t_u] = discretize_u(x_n, x_c, dx, dy, dz, dt, rho_c, mu_if);
   % Inside the domain
   %
   %-------------------
-  for i = 1:n_c
+  for c = 1:n_c
 
     %---------------
     % Unsteady term
     %---------------
     % Unit for a_u and t_u is: kg/m^3 * m^3 / s = kg/s
-    t_u(i) = rho_c(i) * dx(i) * dy(i) * dz(i) / dt;
-    a_u(i,i) = t_u(i);
+    t_u(c) = rho_c(c) * dx(c) * dy(c) * dz(c) / dt;
+    a_u(c,c) = t_u(c);
 
     %---------------
     % Viscous terms
@@ -34,17 +34,17 @@ function [a_u, t_u] = discretize_u(x_n, x_c, dx, dy, dz, dt, rho_c, mu_if);
     % Unit for a_u is: kg/(m s) * m^2 / m = kg/s
 
     % This is the east side
-    if(i < n_c)
-      a = mu_if(i) * dy(i) * dz(i) / (x_c(i+1)-x_c(i));
-      a_u(i,i+1) = -a;
-      a_u(i,i)   =  a_u(i,i) + a;
+    if(c < n_c)
+      a = mu_if(c) * dy(c) * dz(c) / (x_c(c+1)-x_c(c));
+      a_u(c,c+1) = -a;
+      a_u(c,c)   =  a_u(c,c) + a;
     end
 
     % This is the west side
-    if(i > 1)
-      a = mu_if(i-1) * dy(i) * dz(i) / (x_c(i)-x_c(i-1));
-      a_u(i,i-1) = -a;
-      a_u(i,i)   =  a_u(i,i) + a;
+    if(c > 1)
+      a = mu_if(c-1) * dy(c) * dz(c) / (x_c(c)-x_c(c-1));
+      a_u(c,c-1) = -a;
+      a_u(c,c)   =  a_u(c,c) + a;
     end
 
   end
