@@ -1,12 +1,18 @@
 %===============================================================================
-% Performs linear interpolation of velocities at faces, but from matrix
-% entries and righ hand side vectors.  This is an evolutionary step from
-% flux_01_linear_from_velocities and it essentially serves to check if
-% using the matrix entris (like in Peric's thesis and Mencinger's and Zun's
-% paper from 2007) makes any difference in results.  Also, it is useful to
-% check if all terms are properly discretized and used.
+% Performs linear interpolation of momentum at faces, starting from 
+% interpolated matrix entries.  It is one in the series of functions:
 %
-% This is equation (7) in paper from Mecinger and Zun (2007)
+%   flux_01_linear_from_velocities.m
+%   flux_02_linear_from_matrix.m
+%   flux_03_rc_standard_from_velocities.m
+%   flux_04_rc_standard_from_matrix.m
+%   flux_05_rc_majumdar_from_velocities.m
+%   flux_06_rc_majumdar_from_matrix.m
+%   flux_07_rc_majumdar_choi_from_velocities.m
+%   flux_08_rc_majumdar_choi_from_matrix.m
+%
+% which all contain evolutionary steps Mencinger and Zun were doing to (7)
+% and following equations in their paper in JCP from 2007.
 %-------------------------------------------------------------------------------
 function [u_if, u_af] = flux_02_linear_from_matrix(  ...
                         dv, urf_u, a_u, t_u, f_c,    ...
@@ -23,16 +29,20 @@ function [u_if, u_af] = flux_02_linear_from_matrix(  ...
     u_til(c) = u_til(c) / a_u(c,c);                                 % central
   end
 
+  % Form helping arrays
+  dv_au = dv  ./ spdiags(a_u, 0)';
+  tu_au = t_u ./ spdiags(a_u, 0)';
+
   % Equation (7) from Mencinger and Zun
   % Unit for velocity:
   % m/s
   % kg/s / (kg/s) * m/s = m/s
   % m^3 / (kg/s) * N/m^3 = N s / kg = kg m/s^2 * s / kg = m/s
   % m^3 / (kg/s) * kg/(m^2 s^2) = m/s
-  u_if = line_avg(  u_til                             ...  % (7.1) in my notes
-                  + t_u ./ spdiags(a_u, 0)' .* u_c_o  ...  % (7.2 and 7.3)
-                  + dv  ./ spdiags(a_u, 0)' .* f_c    ...  % (7.4 and 7.5)
-                  - dv  ./ spdiags(a_u, 0)' .* p_x    ...  % (7.6 and 7.7)
+  u_if = line_avg(  u_til           ...                    % (7.1) in my notes
+                  + tu_au .* u_c_o  ...                    % (7.2 and 7.3)
+                  + dv_au .* f_c    ...                    % (7.4 and 7.5)
+                  - dv_au .* p_x    ...                    % (7.6 and 7.7)
                   + (1.0 - urf_u) * u_c_star);             % (7.8)
 
   u_af = [0.0,u_if,0.0];  % append boundary values (just zeroes now)

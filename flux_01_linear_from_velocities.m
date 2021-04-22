@@ -1,8 +1,18 @@
 %===============================================================================
-% Performs simple linear interpolation of velocities at faces
+% Performs linear interpolation of momentum at faces, starting from 
+% interpolated velocities.  It is one in the series of functions:
 %
-% This is as simple and as stupid as it gets, and it obviously, won't
-% work with collocated variable arrangement
+%   flux_01_linear_from_velocities.m
+%   flux_02_linear_from_matrix.m
+%   flux_03_rc_standard_from_velocities.m
+%   flux_04_rc_standard_from_matrix.m
+%   flux_05_rc_majumdar_from_velocities.m
+%   flux_06_rc_majumdar_from_matrix.m
+%   flux_07_rc_majumdar_choi_from_velocities.m
+%   flux_08_rc_majumdar_choi_from_matrix.m
+%
+% which all contain evolutionary steps Mencinger and Zun were doing to (7)
+% and following equations in their paper in JCP from 2007.
 %-------------------------------------------------------------------------------
 function [u_if, u_af] = flux_01_linear_from_velocities(u_c)
 
