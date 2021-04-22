@@ -143,10 +143,273 @@ This will all be tagged as revision "analysis_002".
 
 --------------------------------------------------------------------------------
 
+ANALYSIS 003                                              April 22, 09:45 CET
+
+This morning I have implemented Majumdar's scheeme, and should now test it.
+In order to check if I am getting results which are independent from under-
+relaxation factors, I choose a case with the biggest time step (1.0e+5).
+I use four sets of under-relaxation factors:
+
++--------+------+------+------+------+
+|  set:  |  a)  |  b)  |  c)  |  d)  |
++--------+------+------+------+------+
+| urf_u: | 0.95 | 0.85 | 0.75 | 0.65 |
+| urf_p: | 0.05 | 0.15 | 0.25 | 0.35 |
++--------+------+------+------+------+
+
+Each of these tests will be run without Majumdar, with standard Rhie and Chow,
+"Rhie-Chow_Standard_From_Matrix" and with: "Rhie-Chow_Majumdar_From_Matrix".
+This will result in eight tests: a1, b1, c1 and d1 with Rhie and Chow standard,
+and a2, b2, c2 and d2 for Rhie and Chow with Majumdar.
+
+As an example, the solver.par file for cases a1 and a2 looks like:
+
+#--------[ time stepping related ]--------
+# ( 1) dt,            time step
+# ( 2) n_steps,       number of time steps
+# ( 3) step_plot_int, unsteady results plotting interval (0 to skip)
+# ( 4) eps_st,        steady state tolerance
+    1.0e+5
+  100
+    1
+    1.0e-10
+#--------[ simple algorithm related ]--------
+# ( 5) n_iters,       number of iterations in simple algorithm
+# ( 6) iter_plot_int, iteration plotting interval (0 to skip)
+# ( 7) eps_dt,        outer iteration tolerance
+   60
+    0
+    1.0e-4
+#--------[ momentum equation related ]--------
+# ( 8) urf_u,   under-relaxation factor for momentum
+# ( 9) u_iters, number of iterations for momentum solver
+# (10) tol_u,   tolerance for momentum solver
+    0.95
+   60
+    1.0e-10
+#--------[ pressure equation related ]--------
+# (11) urf_p,   under-relaxation factor for pressure
+# (12) p_iters, number of iterations for pressure solver
+# (13) tol_p,  tolerance for pressure solver
+    0.05
+   60
+    1.0e-10
+
+Running the cases:
+
+a1) Steady state reached in 9 time steps.
+    Velocity saved in variable u_a1 with: u_a1 = u_c'
+
+b1) Steady state reached in 4 time steps.
+    Velocity saved in variable u_b1 with: u_b1 = u_c'
+
+c1) Steady state reached in 4 time steps.
+    Velocity saved in variable u_b1 with: u_c1 = u_c'
+
+d1) Steady state reached in 4 time steps.
+    Velocity saved in variable u_b1 with: u_d1 = u_c'
+
+If I print all velocities for this with: test_1 = [u_a1, u_b1, u_c1, u_d1],
+they read:
+
+   4.2817e-04   3.6325e-04   2.7554e-04   1.6912e-04
+   4.9315e-02   8.7929e-02   1.1179e-01   1.1848e-01
+  -8.1399e-01  -6.7122e-01  -5.1513e-01  -3.4827e-01
+  -1.1889e+00  -1.3200e+00  -1.4026e+00  -1.4231e+00
+   6.1523e+00   5.1571e+00   4.1176e+00   3.0291e+00
+   2.2204e+01   2.1432e+01   2.0587e+01   1.9653e+01
+  -2.2195e+01  -2.1423e+01  -2.0581e+01  -1.9649e+01
+  -6.1728e+00  -5.1677e+00  -4.1199e+00  -3.0255e+00
+   1.1037e+00   1.2459e+00   1.3447e+00   1.3852e+00
+   8.6105e-01   6.5945e-01   4.5681e-01   2.5990e-01
+   8.6105e-01   6.5945e-01   4.5681e-01   2.5990e-01
+   1.1037e+00   1.2459e+00   1.3447e+00   1.3852e+00
+  -6.1728e+00  -5.1677e+00  -4.1199e+00  -3.0255e+00
+  -2.2195e+01  -2.1423e+01  -2.0581e+01  -1.9649e+01
+   2.2204e+01   2.1432e+01   2.0587e+01   1.9653e+01
+   6.1523e+00   5.1571e+00   4.1176e+00   3.0291e+00
+  -1.1889e+00  -1.3200e+00  -1.4026e+00  -1.4231e+00
+  -8.1399e-01  -6.7122e-01  -5.1513e-01  -3.4827e-01
+   4.9315e-02   8.7929e-02   1.1179e-01   1.1848e-01
+   4.2817e-04   3.6325e-04   2.7554e-04   1.6912e-04
+
+Now I will turn to cases with Majumdar, "Rhie-Chow_Majumdar_From_Matrix"
+
+a2) Steady state reached in 9 time steps.
+    Velocity saved in variable u_a1 with: u_a2 = u_c'
+
+b2) Steady state reached in 4 time steps.
+    Velocity saved in variable u_b1 with: u_b2 = u_c'
+
+c2) Steady state reached in 4 time steps.
+    Velocity saved in variable u_b1 with: u_c2 = u_c'
+
+d2) Steady state reached in 4 time steps.
+    Velocity saved in variable u_b1 with: u_d2 = u_c'
+
+The results are astonishing.  With: test_2 = [u_a2, u_b2, u_c2, u_d2], I get:
+
+   4.5175e-04   4.5175e-04   4.5175e-04   4.5175e-04
+   2.5241e-02   2.5241e-02   2.5241e-02   2.5241e-02
+  -8.8008e-01  -8.8008e-01  -8.8008e-01  -8.8008e-01
+  -1.1084e+00  -1.1084e+00  -1.1084e+00  -1.1084e+00
+   6.6347e+00   6.6347e+00   6.6347e+00   6.6347e+00
+   2.2567e+01   2.2567e+01   2.2567e+01   2.2567e+01
+  -2.2558e+01  -2.2558e+01  -2.2558e+01  -2.2558e+01
+  -6.6604e+00  -6.6604e+00  -6.6604e+00  -6.6604e+00
+   1.0197e+00   1.0197e+00   1.0197e+00   1.0197e+00
+   9.6002e-01   9.6002e-01   9.6002e-01   9.6002e-01
+   9.6002e-01   9.6002e-01   9.6002e-01   9.6002e-01
+   1.0197e+00   1.0197e+00   1.0197e+00   1.0197e+00
+  -6.6604e+00  -6.6604e+00  -6.6604e+00  -6.6604e+00
+  -2.2558e+01  -2.2558e+01  -2.2558e+01  -2.2558e+01
+   2.2567e+01   2.2567e+01   2.2567e+01   2.2567e+01
+   6.6347e+00   6.6347e+00   6.6347e+00   6.6347e+00
+  -1.1084e+00  -1.1084e+00  -1.1084e+00  -1.1084e+00
+  -8.8008e-01  -8.8008e-01  -8.8008e-01  -8.8008e-01
+   2.5241e-02   2.5241e-02   2.5241e-02   2.5241e-02
+   4.5175e-04   4.5175e-04   4.5175e-04   4.5175e-04
+
+In addition, it would be good to check if variants which work out velocities at
+faces without matrices would be interesting.  Here I mean comparing
+"Rhie-Chow_Standard_From_Velocities" (tests a3, b3, c3 and d3) with
+"Rhie-Chow_Majumdar_From_Velocities" (tests a4, b4, c4 and d4).  Results follow.
+
+a3) Steady state reached in 9 time steps.
+    Velocity saved in variable u_a1 with: u_a3 = u_c'
+
+b3) Steady state reached in 4 time steps.
+    Velocity saved in variable u_b1 with: u_b3 = u_c'
+
+c3) Steady state reached in 4 time steps.
+    Velocity saved in variable u_b1 with: u_c3 = u_c'
+
+d3) Steady state reached in 4 time steps.
+    Velocity saved in variable u_b1 with: u_d3 = u_c'
+
+If I print all velocities for this with: test_3 = [u_a3, u_b3, u_c3, u_d3],
+they read:
+
+octave:53> test_3=[u_a3, u_b3, u_c3, u_d3]
+test_3 =
+
+   4.2817e-04   3.6325e-04   2.7554e-04   1.6912e-04
+   4.9315e-02   8.7929e-02   1.1179e-01   1.1848e-01
+  -8.1399e-01  -6.7122e-01  -5.1513e-01  -3.4827e-01
+  -1.1889e+00  -1.3200e+00  -1.4026e+00  -1.4231e+00
+   6.1523e+00   5.1571e+00   4.1176e+00   3.0291e+00
+   2.2204e+01   2.1432e+01   2.0587e+01   1.9653e+01
+  -2.2195e+01  -2.1423e+01  -2.0581e+01  -1.9649e+01
+  -6.1728e+00  -5.1677e+00  -4.1199e+00  -3.0255e+00
+   1.1037e+00   1.2459e+00   1.3447e+00   1.3852e+00
+   8.6105e-01   6.5945e-01   4.5681e-01   2.5990e-01
+   8.6105e-01   6.5945e-01   4.5681e-01   2.5990e-01
+   1.1037e+00   1.2459e+00   1.3447e+00   1.3852e+00
+  -6.1728e+00  -5.1677e+00  -4.1199e+00  -3.0255e+00
+  -2.2195e+01  -2.1423e+01  -2.0581e+01  -1.9649e+01
+   2.2204e+01   2.1432e+01   2.0587e+01   1.9653e+01
+   6.1523e+00   5.1571e+00   4.1176e+00   3.0291e+00
+  -1.1889e+00  -1.3200e+00  -1.4026e+00  -1.4231e+00
+  -8.1399e-01  -6.7122e-01  -5.1513e-01  -3.4827e-01
+   4.9315e-02   8.7929e-02   1.1179e-01   1.1848e-01
+   4.2817e-04   3.6325e-04   2.7554e-04   1.6912e-04
+
+To compare with test 1, I run: test_1 - test_3 to get:
+
+   8.3944e-13  -1.4223e-13  -2.8983e-12  -2.2707e-12
+   4.0666e-10   1.2295e-10  -1.1762e-09  -5.5087e-10
+  -8.4766e-10  -6.5389e-10   4.9036e-10  -4.7528e-11
+   4.5999e-12   1.4952e-10   3.6451e-10   3.2765e-10
+   4.8113e-10   2.9048e-10  -4.7306e-10  -1.4201e-10
+  -1.0104e-10  -1.5117e-10  -1.1966e-11  -8.5198e-11
+  -2.8615e-10  -1.1130e-10   3.2473e-10   1.0863e-10
+   1.1645e-10   7.9035e-11  -9.9404e-11  -1.9916e-11
+   2.3287e-10   9.8657e-11  -2.3487e-10  -5.2775e-11
+  -1.7555e-10  -8.4394e-11   1.6927e-10   3.4211e-11
+  -1.7552e-10  -8.4424e-11   1.6927e-10   3.4212e-11
+   2.3283e-10   9.8646e-11  -2.3490e-10  -5.2779e-11
+   1.1650e-10   7.8966e-11  -9.9293e-11  -1.9926e-11
+  -2.8627e-10  -1.1095e-10   3.2445e-10   1.0870e-10
+  -1.0075e-10  -1.5153e-10  -1.1728e-11  -8.5294e-11
+   4.8077e-10   2.9003e-10  -4.7296e-10  -1.4267e-10
+   4.6279e-12   1.5077e-10   3.6521e-10   3.2855e-10
+  -8.4748e-10  -6.5453e-10   4.9031e-10  -4.7189e-11
+   4.0690e-10   1.2240e-10  -1.1761e-09  -5.5205e-10
+   8.4144e-13  -1.4011e-13  -2.8954e-12  -2.2710e-12
+
+a4) Steady state reached in 9 time steps.
+    Velocity saved in variable u_a1 with: u_a4 = u_c'
+
+b4) Steady state reached in 4 time steps.
+    Velocity saved in variable u_b1 with: u_b4 = u_c'
+
+c4) Steady state reached in 4 time steps.
+    Velocity saved in variable u_b1 with: u_c4 = u_c'
+
+d4) Steady state reached in 4 time steps.
+    Velocity saved in variable u_b1 with: u_d4 = u_c'
+
+If I print all velocities for this test 1 with:
+test_4 = [u_a4, u_b4, u_c4, u_d4], they read:
+
+   4.5175e-04   4.5175e-04   4.5175e-04   4.5175e-04
+   2.5241e-02   2.5241e-02   2.5241e-02   2.5241e-02
+  -8.8008e-01  -8.8008e-01  -8.8008e-01  -8.8008e-01
+  -1.1084e+00  -1.1084e+00  -1.1084e+00  -1.1084e+00
+   6.6347e+00   6.6347e+00   6.6347e+00   6.6347e+00
+   2.2567e+01   2.2567e+01   2.2567e+01   2.2567e+01
+  -2.2558e+01  -2.2558e+01  -2.2558e+01  -2.2558e+01
+  -6.6604e+00  -6.6604e+00  -6.6604e+00  -6.6604e+00
+   1.0197e+00   1.0197e+00   1.0197e+00   1.0197e+00
+   9.6002e-01   9.6002e-01   9.6002e-01   9.6002e-01
+   9.6002e-01   9.6002e-01   9.6002e-01   9.6002e-01
+   1.0197e+00   1.0197e+00   1.0197e+00   1.0197e+00
+  -6.6604e+00  -6.6604e+00  -6.6604e+00  -6.6604e+00
+  -2.2558e+01  -2.2558e+01  -2.2558e+01  -2.2558e+01
+   2.2567e+01   2.2567e+01   2.2567e+01   2.2567e+01
+   6.6347e+00   6.6347e+00   6.6347e+00   6.6347e+00
+  -1.1084e+00  -1.1084e+00  -1.1084e+00  -1.1084e+00
+  -8.8008e-01  -8.8008e-01  -8.8008e-01  -8.8008e-01
+   2.5241e-02   2.5241e-02   2.5241e-02   2.5241e-02
+   4.5175e-04   4.5175e-04   4.5175e-04   4.5175e-04
+
+To compare with what I had before for test_2, I can do test_2-test_4:
+
+   3.2030e-13  -3.1524e-12   7.6621e-13  -3.6769e-12
+   1.4145e-10  -1.1160e-09   8.6990e-10  -1.2297e-09
+  -7.1298e-10   6.6468e-10  -1.2292e-09   1.1851e-10
+   9.5995e-11  -6.5929e-10  -1.0764e-10   6.1529e-10
+   3.5013e-10   1.0666e-10   7.9829e-10  -2.7331e-10
+  -1.1498e-10   7.7293e-10  -1.3486e-10  -1.7337e-10
+  -1.8106e-10  -8.0253e-10  -4.9273e-10   1.9561e-10
+   9.1672e-11  -1.1754e-10   1.9099e-10  -1.6970e-11
+   1.4922e-10   8.3660e-10   3.7461e-10  -1.3048e-10
+  -1.1830e-10  -4.7975e-10  -2.7719e-10   8.7763e-11
+  -1.1827e-10  -4.7982e-10  -2.7720e-10   8.7762e-11
+   1.4920e-10   8.3656e-10   3.7462e-10  -1.3046e-10
+   9.1653e-11  -1.1745e-10   1.9108e-10  -1.6946e-11
+  -1.8103e-10  -8.0227e-10  -4.9308e-10   1.9536e-10
+  -1.1490e-10   7.7220e-10  -1.3438e-10  -1.7294e-10
+   3.5018e-10   1.0711e-10   7.9831e-10  -2.7340e-10
+   9.5924e-11  -6.5919e-10  -1.0741e-10   6.1510e-10
+  -7.1252e-10   6.6401e-10  -1.2303e-09   1.1877e-10
+   1.4037e-10  -1.1151e-09   8.6897e-10  -1.2303e-09
+   3.1678e-13  -3.1516e-12   7.6841e-13  -3.6776e-12
+
+Which gives negligible differences.
 
 
+Conclusions:
 
+1. Majumdar's scheme seems to be properly implemented.  It gives absolute
+   independency in results on under-relaxation parameters used.
 
+2. Algorithm variants "_From_Velocities" and "_From_Matrix" give negligible
+   differences in results.  Which one to chose, I guess depends on what would
+   be easier to implement in a particular solver.
 
+This will all be tagged as revision "analysis_003".
+
+--------------------------------------------------------------------------------
 
 

@@ -5,7 +5,7 @@
 # ( 4) eps_st,        steady state tolerance
     1.0e+5
   100
-   10
+    1
     1.0e-10
 #--------[ simple algorithm related ]--------
 # ( 5) n_iters,       number of iterations in simple algorithm
@@ -18,13 +18,13 @@
 # ( 8) urf_u,   under-relaxation factor for momentum
 # ( 9) u_iters, number of iterations for momentum solver
 # (10) tol_u,   tolerance for momentum solver
-    0.7
+    0.95
    60
-    1.0e-12
+    1.0e-10
 #--------[ pressure equation related ]--------
 # (11) urf_p,   under-relaxation factor for pressure
 # (12) p_iters, number of iterations for pressure solver
 # (13) tol_p,  tolerance for pressure solver
-    0.3
+    0.05
    60
-    1.0e-12
+    1.0e-10
