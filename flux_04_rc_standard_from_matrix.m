@@ -21,10 +21,10 @@ function [u_if, u_af] = flux_04_rc_standard_from_matrix(  ...
 
   % Calculate u_tilde (for equation (8) from Mencinger and Zun
   u_til(1:n_c) = 0.0;
-  for i = 1:n_c
-    if(i < n_c)  u_til(i) = u_til(i) - a_u(i,i+1) * u_c(i+1);  end  % east
-    if(i > 1)    u_til(i) = u_til(i) - a_u(i,i-1) * u_c(i-1);  end  % west
-    u_til(i) = u_til(i) / a_u(i,i);                                 % central
+  for c = 1:n_c
+    if(c < n_c)  u_til(c) = u_til(c) - a_u(c,c+1) * u_c(c+1);  end  % east
+    if(c > 1)    u_til(c) = u_til(c) - a_u(c,c-1) * u_c(c-1);  end  % west
+    u_til(c) = u_til(c) / a_u(c,c);                                 % central
   end
 
   % Equation (10) from Mencinger and Zun
