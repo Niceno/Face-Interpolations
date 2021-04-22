@@ -1,5 +1,5 @@
 %===============================================================================
-% Performs Rhie and Chow, Majumdar and Choi's interpolation of momentum
+% Performs Rhie and Chow, Majumdar, Choi and Gu's interpolation of momentum
 % at faces, starting from interpolated matrix entries.  It is one in the
 % series of functions:
 %
@@ -17,8 +17,8 @@
 % which all contain evolutionary steps Mencinger and Zun were doing to (7)
 % and following equations in their paper in JCP from 2007.
 %-------------------------------------------------------------------------------
-function [u_if, u_af] = flux_08_rc_majumdar_choi_from_matrix(  ...
-                        x_c, dv, urf_u, a_u, t_u, f_c,    ...
+function [u_if, u_af] = flux_10_rc_majumdar_choi_from_matrix(  ...
+                        x_c, dv, urf_u, a_u, t_u, f_if,        ...
                         u_c, u_if_o, u_if_star, p_c, p_x)
 
   % Fetch the system size
@@ -43,8 +43,8 @@ function [u_if, u_af] = flux_08_rc_majumdar_choi_from_matrix(  ...
   % m^3 / (kg/s) * N/m^3 = N s / kg = kg m/s^2 * s / kg = m/s
   % m/s
   % m^3 / (kg/s) * kg/(m^2 s^2) = m/s
-  u_if = line_avg(  u_til                            ...   % (7.1) in my notes
-                  + dv_au .* f_c)                    ...   % (7.4 and 7.5)
+  u_if = line_avg(u_til)                             ...   % (7.1) in my notes
+       + line_avg(dv_au) .* f_if                     ...   % Gu
        + line_avg(tu_au) .* u_if_o                   ...   % Choi
        + (1.0 - urf_u) * u_if_star                   ...   % Majumdar
        - line_avg(dv_au) .* diff(p_c) ./ diff(x_c);        % Rhie and Chow

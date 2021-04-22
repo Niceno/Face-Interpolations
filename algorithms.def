@@ -1,4 +1,4 @@
-Rhie-Chow_Majumdar_Choi_From_Velocities
+Rhie-Chow_Majumdar_Choi_Gu_From_Velocities
 
 # Valid options are:
 Linear_From_Velocities
@@ -9,4 +9,6 @@ Rhie-Chow_Majumdar_From_Velocities
 Rhie-Chow_Majumdar_From_Matrix
 Rhie-Chow_Majumdar_Choi_From_Velocities
 Rhie-Chow_Majumdar_Choi_From_Matrix
+Rhie-Chow_Majumdar_Choi_Gu_From_Velocities
+Rhie-Chow_Majumdar_Choi_Gu_From_Matrix
 

@@ -11,6 +11,8 @@
 %   flux_06_rc_majumdar_from_matrix.m
 %   flux_07_rc_majumdar_choi_from_velocities.m
 %   flux_08_rc_majumdar_choi_from_matrix.m
+%   flux_09_rc_majumdar_choi_gu_from_velocities.m
+%   flux_10_rc_majumdar_choi_gu_from_matrix.m
 %
 % which all contain evolutionary steps Mencinger and Zun were doing to (7)
 % and following equations in their paper in JCP from 2007.
