@@ -176,9 +176,25 @@ for k = 1:n_steps
   printf('# Time Step: %d          \n', k);
   printf('#                        \n');
   printf('#========================\n');
-  % Store the last time step as old
 
+  % Store the last time step as old
   u_c_o = u_c;
+
+  %-------------------------------
+  % Discretize momentum equations
+  %-------------------------------
+  [a_u, t_u] = discretize_u(x_n, x_c, dx, dy, dz, dt, rho_c, mu_if);
+
+  % Under-relax the discretized momentum equations
+  for i=1:n_c
+    a_u(i,i) = a_u(i,i) / urf_u;
+  end
+
+  %-------------------------------
+  % Discretize pressure equations
+  %-------------------------------
+  % Units are: ms
+  a_p = discretize_p(x_c, dy, dz, dv, a_u, rho_if);
 
   %----------------------------
   %
@@ -187,11 +203,10 @@ for k = 1:n_steps
   %----------------------------
   for iter = 1:n_iters
 
-    %-------------------------------
-    % Discretize momentum equations
-    %-------------------------------
+    %----------------------------
+    % Initialize right-hand side
+    %----------------------------
     % Unit for a_u is kg/s (see inside function for details)
-    [a_u, t_u] = discretize_u(x_n, x_c, dx, dy, dz, dt, rho_c, mu_if);
     b_u(1:n_c) = 0.0;
 
     %------------------------------------------
@@ -213,10 +228,10 @@ for k = 1:n_steps
     f_c = g * rho_c;        % kg/m^3 * m/s^2 = kg/(m^2 s^2) = N/m^3
     b_u = b_u + f_c .* dv;
 
-    % Under-relax momentum equations
+    % Under-relax forces in momentum equations
+    % (a_u is already divided by urf_u above)
     for i=1:n_c
-      b_u(i) = b_u(i) + (1.0-urf_u) / urf_u * a_u(i,i) * u_c(i);
-      a_u(i,i) = a_u(i,i) / urf_u;
+      b_u(i) = b_u(i) + (1.0-urf_u) * a_u(i,i) * u_c(i);
     end
 
     %--------------------------
@@ -228,12 +243,6 @@ for k = 1:n_steps
     if(exist('fig_u', 'var') == 1 && mod(iter, iter_plot_int) == 0)
       plot_var(fig_u, 1, x_c, u_c, 'Cell Velocity Before Correction', iter);
     end
-
-    %-------------------------------
-    % Discretize pressure equations
-    %-------------------------------
-    % Units are: ms
-    a_p = discretize_p(x_c, dy, dz, dv, a_u, rho_if);
 
     %--------------------------
     % Form r.h.s. for pressure
