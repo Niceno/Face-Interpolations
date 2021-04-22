@@ -137,6 +137,7 @@ vof_f = line_avg(vof_c);
 % Initial values
 %----------------
 u_c(1:n_c)  = 0.0;             % for velocities
+u_if = line_avg(u_c);
 p_c(1:n_c)  = 0.0;             % for pressure
 pp_c(1:n_c) = 0.0;             % for pressure correction
 p_x = gradient_p(x_c, p_c);  % for pressure gradients
@@ -211,7 +212,8 @@ for k = 1:n_steps
   for i = 1:n_iters
 
     % Store velocity from last iteration (suffix "star")
-    u_c_star = u_c;
+    u_c_star  = u_c;
+    u_if_star = u_if;
 
     %-----------------------------------------
     % Initialize right-hand side for momentum
@@ -283,6 +285,10 @@ for k = 1:n_steps
         [u_if, u_af] = flux_04_rc_standard_from_matrix(      ...
                        x_c, dv, urf_u, a_u, t_u, f_c,        ...
                        u_c, u_c_o, u_c_star, p_c, p_x);
+      case 'Rhie-Chow_Majumdar_From_Matrix'
+        [u_if, u_af] = flux_06_rc_majumdar_from_matrix(      ...
+                       x_c, dv, urf_u, a_u, t_u, f_c,        ...
+                       u_c, u_c_o, u_if_star, p_c, p_x);
       otherwise
         do_something_completely_different ();
     end
