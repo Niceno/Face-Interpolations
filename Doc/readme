@@ -412,4 +412,154 @@ This will all be tagged as revision "analysis_003".
 
 --------------------------------------------------------------------------------
 
+ANALYSIS 004                                              April 22, 11:33 CET
+
+OK, next in line is Majumdar's scheme.  First attemp a couple of days ago was
+a failure.  I did try to implement it without Majumdar's scheme, maybe Choi
+depends on Majumdar, I will know better today.
+
+OK, in order to shorten the analysis, I will focus on two time steps first,
+the last one which produced step profiles for pressure (dt = 0.1) and the
+first one which didn'.  I will try both simulations without Choi's scheme
+and with Choi scheme.
+
+So, the tests will be:
+
++----------+-----------+-----------+
+|          |  No Choi  | With Choi |
++----------+-----------+-----------+
+| dt = 0.1 |     a)    |    c)     |
++----------+-----------+-----------+
+| dt = 1.0 |     b)    |    d)     |
++----------+-----------+-----------+
+
+OK, let the tests start.
+
+a) Majumdar alone, dt = 0.1
+   Converged in 401 time steps
+   Saved results in png file:     analysis_004_a_no_choi_dt_0.1.png
+   Saved results in memory with:  u_test_a = u_c'; p_test_a = p_c'
+
+b) Majumdar alone, dt = 10.0
+   Converged in 17 time steps
+   Saved results in png file:     analysis_004_b_no_choi_dt_10.png
+   Saved results in memory with:  u_test_b = u_c'; p_test_b = p_c'
+
+   Tests a) and b) already show that:
+   - test a) gives steps in pressure profile but b) doesn't
+   - results differ a lot.
+
+c) Majumdar and Choi, dt = 0.1
+   Converged in 2165 time steps (a hell of an increas over case a))
+   Saved results in png file:     analysis_004_c_with_choi_dt_0.1.png
+   Saved results in memory with:  u_test_c = u_c'; p_test_c = p_c'
+
+d) Majumdar and Choi, dt = 10.0
+   Converged in 30 time steps
+   Saved results in png file:     analysis_004_d_with_choi_dt_10.png
+   Saved results in memory with:  u_test_d = u_c'; p_test_d = p_c'
+
+Then I created: analysis_004_velocities_a-d.dat and 
+analysis_004_pressures_a-d.dat with: [u_test_a, u_test_b, u_test_c, u_test_d]
+[p_test_a, p_test_b, p_test_c, p_test_d] and processed them both in xmgrace to
+get files analysis_004_velocities_a-d.agr and
+analysis_004_pressures_a-d.agr.
+
+What I can conclude from this analysis is that:
+
+- Two results obtained without Choi implementation seem to differ more than
+  two results obtained with Choi implementation.  That is fine.
+
+- Choi implementation seems to eliminate step-wise pressure profiles for 
+  small time steps, which is absolutelly great.
+
+- The two results I got for Choi implementation, seem to differ more than
+  what Mencinger and Zun obtained, which worries me a bit.
+
+Next thing I should do is to also try Chow implementation from velocities.  OK,
+did that too and results are negligible.  Seems to work all right.
+
+I am curios ... would also like to try the last function which was implemented,
+the "flux_07_rc_majumdar_choi_from_velocities" for a range of time steps from
+1e1 to 1e6 (if the last works) to see the progression of velocities.  Hence,
+more tests:
+
+solver.par looks like:
+
+#--------[ time stepping related ]--------
+# ( 1) dt,            time step
+# ( 2) n_steps,       number of time steps
+# ( 3) step_plot_int, unsteady results plotting interval (0 to skip)
+# ( 4) eps_st,        steady state tolerance
+    1.0e+1
+  100
+    5
+    1.0e-10
+#--------[ simple algorithm related ]--------
+# ( 5) n_iters,       number of iterations in simple algorithm
+# ( 6) iter_plot_int, iteration plotting interval (0 to skip)
+# ( 7) eps_dt,        outer iteration tolerance
+   60
+    0
+    1.0e-4
+#--------[ momentum equation related ]--------
+# ( 8) urf_u,   under-relaxation factor for momentum
+# ( 9) u_iters, number of iterations for momentum solver
+# (10) tol_u,   tolerance for momentum solver
+    0.7
+   60
+    1.0e-10
+#--------[ pressure equation related ]--------
+# (11) urf_p,   under-relaxation factor for pressure
+# (12) p_iters, number of iterations for pressure solver
+# (13) tol_p,  tolerance for pressure solver
+    0.3
+   60
+    1.0e-10
+
+Note that eps_st is set to 1e-10 for these tests, it was 1.0e-8 for a-d.
+
+e) dt = 10
+   Converged in 38 time steps.
+   u_test_e = u_c'
+
+f) dt = 100
+   Converged in 11 time steps.
+   u_test_f = u_c'
+
+g) dt = 1000
+   Converged in 6 time steps.
+   u_test_g = u_c'
+
+h) dt = 10000
+   Converged in 5 time steps.
+   u_test_h = u_c'
+
+i) dt = 100000
+   Converged in 4 time steps.
+   u_test_i = u_c'
+
+j) dt = 1000000
+   Converged in 4 time steps.
+   u_test_j = u_c'
+
+Fine, all tests ran and results are in: "analysis_004_velocities_e-j.dat"
+It is obvious they are converging as the time step increases.
+
+Conclusions:
+
+- It seems that implementation of Choi's method works both in the case of
+  matrix and in the case of velocities.
+
+- Implementation seems to be able to eliminate spurios pressure fields in
+  case of small time steps, which was the most important thing to achieve.
+
+- Results don't seem so independent from time step as I have hoped for, but
+  at least they all semm to converge with increasing time step (would it
+  also be the case if no Choi was used, should be checked.)
+
+This will all be tagged as revision "analysis_004".
+
+--------------------------------------------------------------------------------
+
 
