@@ -161,14 +161,37 @@ if(step_plot_int > 0)
                           ' and dt=', mat2str(dt)]);
 end
 
-% Initialize array for residuals in time step
-o_res = [];
+%----------------------
+%
+% Discretize equations
+%
+%----------------------
+
+%-------------------------------
+% Discretize momentum equations
+%-------------------------------
+[a_u, t_u] = discretize_u(x_n, x_c, dx, dy, dz, dt, rho_c, mu_if);
+
+% Under-relax the discretized momentum equations
+for i=1:n_c
+  a_u(i,i) = a_u(i,i) / urf_u;
+end
+
+%-------------------------------
+% Discretize pressure equations
+%-------------------------------
+% Units are: ms
+a_p = discretize_p(x_c, dy, dz, dv, a_u, rho_if);
 
 %----------------------
 %
 % Loop over time steps
 %
 %----------------------
+
+% Initialize array for residuals in time step
+o_res = [];
+
 for k = 1:n_steps
 
   printf('#========================\n');
@@ -177,24 +200,8 @@ for k = 1:n_steps
   printf('#                        \n');
   printf('#========================\n');
 
-  % Store the last time step as old
+  % Store the last time step as old (suffix "o")
   u_c_o = u_c;
-
-  %-------------------------------
-  % Discretize momentum equations
-  %-------------------------------
-  [a_u, t_u] = discretize_u(x_n, x_c, dx, dy, dz, dt, rho_c, mu_if);
-
-  % Under-relax the discretized momentum equations
-  for i=1:n_c
-    a_u(i,i) = a_u(i,i) / urf_u;
-  end
-
-  %-------------------------------
-  % Discretize pressure equations
-  %-------------------------------
-  % Units are: ms
-  a_p = discretize_p(x_c, dy, dz, dv, a_u, rho_if);
 
   %----------------------------
   %
@@ -203,9 +210,9 @@ for k = 1:n_steps
   %----------------------------
   for iter = 1:n_iters
 
-    %----------------------------
-    % Initialize right-hand side
-    %----------------------------
+    %-----------------------------------------
+    % Initialize right-hand side for momentum
+    %-----------------------------------------
     % Unit for a_u is kg/s (see inside function for details)
     b_u(1:n_c) = 0.0;
 
@@ -237,6 +244,10 @@ for k = 1:n_steps
     %--------------------------
     % Solve momentum equations
     %--------------------------
+
+    % Store the previous iteration (suffix "p" for previous)
+    u_c_p = u_c;
+
     % Units for velocity are: kg m/s^2 * s/kg = m/s
     u_c = pcg(a_u, b_u', tol_u, u_iters, [], [], u_c')';  % size = [1, n_c]
 
