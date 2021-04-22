@@ -11,11 +11,6 @@ function [u_if, u_af] = flux_04_rc_standard_from_matrix(  ...
                         x_c, dv, urf_u, a_u, t_u, f_c,    ...
                         u_c, u_c_o, p_c, p_x)
 
-  % u_if = line_avg(u_c + dv ./ spdiags(a_u, 0)' .* p_x);
-  % u_if = u_if - line_avg(dv ./ spdiags(a_u, 0)') .* diff(p_c) ./ diff(x_c);
-
-  % u_af = [0.0,u_if,0.0];  % append boundary values (just zeroes now)
-
   % Fetch the system size
   n_c = size(u_c, 2);
 
