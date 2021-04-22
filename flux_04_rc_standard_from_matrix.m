@@ -9,7 +9,7 @@
 %-------------------------------------------------------------------------------
 function [u_if, u_af] = flux_04_rc_standard_from_matrix(  ...
                         x_c, dv, urf_u, a_u, t_u, f_c,    ...
-                        u_c, u_c_o, p_c, p_x)
+                        u_c, u_c_o, u_c_star, p_c, p_x)
 
   % Fetch the system size
   n_c = size(u_c, 2);
@@ -32,7 +32,7 @@ function [u_if, u_af] = flux_04_rc_standard_from_matrix(  ...
   u_if = line_avg(  u_til                             ...  % (7.1) in my notes
                   + t_u ./ spdiags(a_u, 0)' .* u_c_o  ...  % (7.2 and 7.3)
                   + dv  ./ spdiags(a_u, 0)' .* f_c    ...  % (7.4 and 7.5)
-                  + (1.0 - urf_u) * u_c_o)            ...  % (7.8)
+                  + (1.0 - urf_u) * u_c_star)         ...  % (7.8)
        - line_avg(dv ./ spdiags(a_u, 0)') .* diff(p_c) ./ diff(x_c);
 
   u_af = [0.0,u_if,0.0];  % append boundary values (just zeroes now)

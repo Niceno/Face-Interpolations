@@ -210,6 +210,9 @@ for k = 1:n_steps
   %----------------------------
   for i = 1:n_iters
 
+    % Store velocity from last iteration (suffix "star")
+    u_c_star = u_c;
+
     %-----------------------------------------
     % Initialize right-hand side for momentum
     %-----------------------------------------
@@ -271,7 +274,7 @@ for k = 1:n_steps
       case 'Linear_From_Matrix'
         [u_if, u_af] = flux_02_linear_from_matrix(           ...
                        dv, urf_u, a_u, t_u, f_c,             ...
-                       u_c, u_c_o, p_x);
+                       u_c, u_c_o, u_c_star, p_x);
       case 'Rhie-Chow_Standard_From_Velocities'
         [u_if, u_af] = flux_03_rc_standard_from_velocities(  ...
                        x_c, dv, a_u,                         ...
@@ -279,7 +282,7 @@ for k = 1:n_steps
       case 'Rhie-Chow_Standard_From_Matrix'
         [u_if, u_af] = flux_04_rc_standard_from_matrix(      ...
                        x_c, dv, urf_u, a_u, t_u, f_c,        ...
-                       u_c, u_c_o, p_c, p_x);
+                       u_c, u_c_o, u_c_star, p_c, p_x);
       otherwise
         do_something_completely_different ();
     end
