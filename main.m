@@ -384,7 +384,7 @@ for k = 1:n_steps
   res_st = r_n_0 / r_1_0;
   printf('Residual to steady state: %E\n', res_st);
   o_res = [o_res, res_st];
-  if(res_st < 1.0e-10)
+  if(res_st < eps_st)
     printf('#======================\n');
     printf('#                      \n');
     printf('# Steady State Reached \n');
