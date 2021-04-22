@@ -11,7 +11,7 @@ function [u_if, u_af] = flux_03_rc_standard_from_velocities(  ...
   %-------------------------------------------
 
   % Unit for velocity: m^3 * s / kg * kg/(m^2 s^2) = m / s
-  u_if = line_avg(u_c + dv ./ spdiags(a_u, 0)' .* p_x);
+  u_if = line_avg(u_c + dv ./ spdiags(a_u, 0)' .* p_x);  % Rhie and Chow
 
   %----------------------------------
   % Add staggered pressure gradients

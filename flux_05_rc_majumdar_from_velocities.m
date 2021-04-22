@@ -13,8 +13,8 @@ function [u_if, u_af] = flux_05_rc_majumdar_from_velocities(  ...
   % Unit for velocity:
   % m^3 * s / kg * kg/(m^2 s^2) = m / s
   % m/s
-  u_if = line_avg(u_c + dv ./ spdiags(a_u, 0)' .* p_x ...
-                      - (1.0 - urf_u) * u_c_star);
+  u_if = line_avg(u_c + dv ./ spdiags(a_u, 0)' .* p_x ...  % Rhie and Chow
+                      - (1.0 - urf_u) * u_c_star);         % Majumdar
 
   %---------------------
   % Add staggered terms
