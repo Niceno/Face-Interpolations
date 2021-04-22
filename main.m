@@ -50,7 +50,6 @@
 %
 %     u_c, u_c_o, u_if, u_af, p_c
 %-------------------------------------------------------------------------------
-clear;
 
 g = 10.0;  % gravitational constant
 
@@ -58,18 +57,19 @@ g = 10.0;  % gravitational constant
 % Solver parameters
 %-------------------
 par = load('-ascii', 'solver.par')
-dt            = par(1);   % time step
-n_steps       = par(2);   % number of time steps
-step_plot_int = par(3);   % plot interval for time steps
-n_iters       = par(4);   % number of simple iterations
-iter_plot_int = par(5);   % plot interval for iterations
-o_tol         = par(6);   % outer (time step) loop tolerance
-urf_u         = par(7);   % under-relaxation factor for momentum
-u_iters       = par(8);   % number of iterations for momentum solver
-tol_u         = par(9);   % tolerance for momentum solver
-urf_p         = par(10);  % under-relaxation factor for pressure
-p_iters       = par(11);  % number of iterations for pressure solver
-tol_p         = par(12);  % tolerance for pressure solver
+dt            = par( 1);  % time step
+n_steps       = par( 2);  % number of time steps
+step_plot_int = par( 3);  % plot interval for time steps
+eps_st        = par( 4);  % steady state tolerance
+n_iters       = par( 5);  % number of simple iterations
+iter_plot_int = par( 6);  % plot interval for iterations
+eps_dt        = par( 7);  % outer (time step) loop tolerance
+urf_u         = par( 8);  % under-relaxation factor for momentum
+u_iters       = par( 9);  % number of iterations for momentum solver
+tol_u         = par(10);  % tolerance for momentum solver
+urf_p         = par(11);  % under-relaxation factor for pressure
+p_iters       = par(12);  % number of iterations for pressure solver
+tol_p         = par(13);  % tolerance for pressure solver
 
 %------------------------------
 % Face interpolation algorithm
@@ -129,8 +129,8 @@ vof_f = line_avg(vof_c);
 % Work out the exact pressure solution
 % (Interesting, but leave out for now)
 % p_c(1:n_c) = 0;  % initialize pressure everywhere
-% for i = 1:n_c-1
-%   p_c(i+1) = p_c(i) + g * (x_c(i+1)-x_c(i)) * rho_f(i);
+% for c = 1:n_c-1
+%   p_c(c+1) = p_c(c) + g * (x_c(c+1)-x_c(c)) * rho_f(c);
 % end
 
 %----------------
@@ -150,9 +150,9 @@ iter_leg = [];
 if(iter_plot_int > 0)
   fig_u = figure('Name', 'Velocity Iterations');
   fig_p = figure('Name', 'Pressure Iterations');
-  for i = 1:n_iters
-    if(mod(i, iter_plot_int) == 0)
-      iter_leg = [iter_leg; sprintf('iter %d', i)];
+  for c = 1:n_iters
+    if(mod(c, iter_plot_int) == 0)
+      iter_leg = [iter_leg; sprintf('iter %d', c)];
     end
   end
 end
@@ -173,8 +173,8 @@ end
 [a_u, t_u] = discretize_u(x_n, x_c, dx, dy, dz, dt, rho_c, mu_if);
 
 % Under-relax the discretized momentum equations
-for i=1:n_c
-  a_u(i,i) = a_u(i,i) / urf_u;
+for c=1:n_c
+  a_u(c,c) = a_u(c,c) / urf_u;
 end
 
 %-------------------------------
@@ -194,11 +194,11 @@ o_res = [];
 
 for k = 1:n_steps
 
-  printf('#========================\n');
-  printf('#                        \n');
-  printf('# Time Step: %d          \n', k);
-  printf('#                        \n');
-  printf('#========================\n');
+  printf('#======================\n');
+  printf('#                      \n');
+  printf('# Time Step: %d        \n', k);
+  printf('#                      \n');
+  printf('#======================\n');
 
   % Store the last time step as old (suffix "o")
   u_c_o = u_c;
@@ -208,7 +208,7 @@ for k = 1:n_steps
   % Loop over inner iterations
   %
   %----------------------------
-  for iter = 1:n_iters
+  for i = 1:n_iters
 
     %-----------------------------------------
     % Initialize right-hand side for momentum
@@ -237,9 +237,14 @@ for k = 1:n_steps
 
     % Under-relax forces in momentum equations
     % (a_u is already divided by urf_u above)
-    for i=1:n_c
-      b_u(i) = b_u(i) + (1.0-urf_u) * a_u(i,i) * u_c(i);
+    for c=1:n_c
+      b_u(c) = b_u(c) + (1.0-urf_u) * a_u(c,c) * u_c(c);
     end
+
+    % Store initial residual for this time step
+    % (I use the same name as Mencinger and Zun)
+    if(i == 1) r_n_0 = norm(a_u * u_c' - b_u'); end
+    if(k == 1) r_1_0 = r_n_0; end
 
     %--------------------------
     % Solve momentum equations
@@ -251,8 +256,8 @@ for k = 1:n_steps
     % Units for velocity are: kg m/s^2 * s/kg = m/s
     u_c = pcg(a_u, b_u', tol_u, u_iters, [], [], u_c')';  % size = [1, n_c]
 
-    if(exist('fig_u', 'var') == 1 && mod(iter, iter_plot_int) == 0)
-      plot_var(fig_u, 1, x_c, u_c, 'Cell Velocity Before Correction', iter);
+    if(exist('fig_u', 'var') == 1 && mod(i, iter_plot_int) == 0)
+      plot_var(fig_u, 1, x_c, u_c, 'Cell Velocity Before Correction', i);
     end
 
     %--------------------------
@@ -282,8 +287,8 @@ for k = 1:n_steps
     % Unit for b_p is: kg/m^3 * m/s * m^2 = kg/s
     b_p = -diff(rho_af .* u_af) .* dy .* dz;
 
-    if(mod(iter, iter_plot_int) == 0)
-      plot_var(fig_u, 2, x_if, u_if, 'Face Velocity Before Correction', iter);
+    if(mod(i, iter_plot_int) == 0)
+      plot_var(fig_u, 2, x_if, u_if, 'Face Velocity Before Correction', i);
     end
 
     %-------------------------------
@@ -292,8 +297,8 @@ for k = 1:n_steps
     % Units for pressure are: kg/s / (ms) = kg/(m s^2)
     pp_c = pcg(a_p, b_p', tol_p, p_iters, [], [], pp_c')';  % size = [1, n_c]
 
-    if(mod(iter, iter_plot_int) == 0)
-      plot_var(fig_p, 1, x_c, pp_c, 'Pressure Correction', iter);
+    if(mod(i, iter_plot_int) == 0)
+      plot_var(fig_p, 1, x_c, pp_c, 'Pressure Correction', i);
     end
 
     %---------------------------
@@ -302,8 +307,8 @@ for k = 1:n_steps
     % Unit for pressure: N/m^2 = kg m/s^2 / m^2 = kg/(m s^2)
     p_c = p_c + pp_c * urf_p;
 
-    if(mod(iter, iter_plot_int) == 0)
-      plot_var(fig_p, 2, x_c, p_c, 'Pressure', iter);
+    if(mod(i, iter_plot_int) == 0)
+      plot_var(fig_p, 2, x_c, p_c, 'Pressure', i);
     end
 
     %------------------------------------------------------
@@ -312,9 +317,9 @@ for k = 1:n_steps
     p_x  = gradient_p(x_c, p_c);
     pp_x = gradient_p(x_c, pp_c);
 
-    if(mod(iter, iter_plot_int) == 0)
-      plot_var(fig_p, 3, x_c, p_x,  'Pressure Gradient', iter);
-      plot_var(fig_p, 4, x_c, pp_x, 'Pressure Correction Gradient', iter);
+    if(mod(i, iter_plot_int) == 0)
+      plot_var(fig_p, 3, x_c, p_x,  'Pressure Gradient', i);
+      plot_var(fig_p, 4, x_c, pp_x, 'Pressure Correction Gradient', i);
     end
 
     %-------------------------
@@ -322,24 +327,37 @@ for k = 1:n_steps
     %-------------------------
     u_c = u_c - pp_x .* dv ./ spdiags(a_u, 0)';
 
-    if(mod(iter, iter_plot_int) == 0)
-      plot_var(fig_u, 3, x_c, u_c, 'Cell Velocity After Correction', iter);
+    if(mod(i, iter_plot_int) == 0)
+      plot_var(fig_u, 3, x_c, u_c, 'Cell Velocity After Correction', i);
     end
 
     %-------------------------
     % Correct face velocities
     %-------------------------
     % Units for velocity: kg/(m s^2) * ms / m^2 * m^3 / kg = m/s
-    for i=1:n_c-1
-      a_f = 0.5 * (dy(i)*dz(i) + dy(i+1)*dz(i+1));
-      u_if(i) = u_if(i) + (pp_c(i+1) - pp_c(i)) * a_p(i,i+1) / (rho_if(i) * a_f);
+    for c=1:n_c-1
+      a_f = 0.5 * (dy(c)*dz(c) + dy(c+1)*dz(c+1));
+      u_if(c) = u_if(c) + (pp_c(c+1) - pp_c(c)) * a_p(c,c+1) / (rho_if(c) * a_f);
     end
 
-    if(mod(iter, iter_plot_int) == 0)
-      plot_var(fig_u, 4, x_if, u_if, 'Face Velocity After Correction', iter);
+    if(mod(i, iter_plot_int) == 0)
+      plot_var(fig_u, 4, x_if, u_if, 'Face Velocity After Correction', i);
+    end
+
+    % Work out residuals in the current iteration
+    % (I use the same name as Mencinger and Zun)
+    r_n_i = norm(a_u * u_c' - b_u')
+
+    res_dt = r_n_i / r_n_0;
+    printf('Residual reduction: %E\n', res_dt);
+
+    if(res_dt < eps_dt)
+      printf('Convergence in time step reached\n');
+      break;
     end
 
   end
+
 
   % Plot transient solutions
   if(mod(k, step_plot_int) == 0)
@@ -350,9 +368,15 @@ for k = 1:n_steps
   end
 
   % Check if steady state has been reached
-  o_res = [o_res, sqrt(dot((u_c-u_c_o), (u_c-u_c_o)))];
-  printf('Outer loop residual %E\n', o_res(end));
-  if(o_res(end) < o_tol)
+  res_st = r_n_0 / r_1_0;
+  printf('Residual to steady state: %E\n', res_st);
+  o_res = [o_res, res_st];
+  if(res_st < 1.0e-10)
+    printf('#======================\n');
+    printf('#                      \n');
+    printf('# Steady State Reached \n');
+    printf('#                      \n');
+    printf('#======================\n');
     break;
   end
 
@@ -368,22 +392,22 @@ plot_var(fig_f, 4, x_c,  p_c,  'Pressure',            1);
 
 % Plot residual history
 figure('Name', 'Residual History');
-x=[]; for i=1:size(o_res,2) x=[x, i]; end
-semilogy(x, o_res);
+x=[]; for c=1:size(o_res,2) x=[x, c]; end
+semilogy(x, o_res, '-*');
 title(['Convergence History With ', strrep(algor, '_', ' '), ...
        ' and dt=', mat2str(dt)]);
 
 % Place legends to plots
-if(mod(iter, iter_plot_int) == 0)
+if(mod(i, iter_plot_int) == 0)
   figure(fig_u);  legend(iter_leg);
   figure(fig_p);  legend(iter_leg);
 end
 
 if(step_plot_int > 0)
   step_leg = [];
-  for i = 1:k
-    if(mod(i, step_plot_int) == 0)
-      step_leg = [step_leg; sprintf('step %d', i)];
+  for c = 1:k
+    if(mod(c, step_plot_int) == 0)
+      step_leg = [step_leg; sprintf('step %d', c)];
     end
   end
   figure(fig_a);  subplot(2,2,1);  legend(step_leg);

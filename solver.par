@@ -1,28 +1,30 @@
 #--------[ time stepping related ]--------
-# (1) dt,            time step
-# (2) n_steps,       number of time steps
-# (3) step_plot_int, unsteady results plotting interval (0 to skip)
-   1.0e+5
-12000
-   20
+# ( 1) dt,            time step
+# ( 2) n_steps,       number of time steps
+# ( 3) step_plot_int, unsteady results plotting interval (0 to skip)
+# ( 4) eps_st,        steady state tolerance
+    1.0e+5
+  100
+   10
+    1.0e-10
 #--------[ simple algorithm related ]--------
-# (4) n_iters,       number of iterations in simple algorithm
-# (5) iter_plot_int, iteration plotting interval (0 to skip)
-# (6) o_tol,         outer iteration tolerance
-   6
-   0
-   1.0e-6
+# ( 5) n_iters,       number of iterations in simple algorithm
+# ( 6) iter_plot_int, iteration plotting interval (0 to skip)
+# ( 7) eps_dt,        outer iteration tolerance
+   60
+    0
+    1.0e-4
 #--------[ momentum equation related ]--------
-# (7) urf_u,   under-relaxation factor for momentum
-# (8) u_iters, number of iterations for momentum solver
-# (9) tol_u,   tolerance for momentum solver
-   0.7
-  60
-   1.0e-12
+# ( 8) urf_u,   under-relaxation factor for momentum
+# ( 9) u_iters, number of iterations for momentum solver
+# (10) tol_u,   tolerance for momentum solver
+    0.7
+   60
+    1.0e-12
 #--------[ pressure equation related ]--------
-# (10) urf_p,   under-relaxation factor for pressure
-# (11) p_iters, number of iterations for pressure solver
-# (12) tol_p,  tolerance for pressure solver
-   0.3
-  60
-   1.0e-12
+# (11) urf_p,   under-relaxation factor for pressure
+# (12) p_iters, number of iterations for pressure solver
+# (13) tol_p,  tolerance for pressure solver
+    0.3
+   60
+    1.0e-12
