@@ -75,7 +75,8 @@ tol_p         = par(13);  % tolerance for pressure solver
 % Face interpolation algorithm
 %------------------------------
 fid = fopen('algorithms.def','r');
-algor = fgetl(fid);
+algor   = fgetl(fid)
+p_matrix= fgetl(fid)
 fclose(fid);
 
 %---------------------
@@ -102,8 +103,8 @@ x_c  = line_avg(x_n);  % cell coordinates,       size = [1, n_c]
 x_if = line_avg(x_c);  % inner face coordinates, size = [1, n_c-1]
 
 dx = x_n(2:end) - x_n(1:end-1);  % size = [1, n_c]
-dy = dx;                         % size = [1, n_c]
-dz = dx;                         % size = [1, n_c]
+dy = dx * 2000.0;                % size = [1, n_c]
+dz = dx * 2000.0;                % size = [1, n_c]
 dv = dx .* dy .* dz;             % size = [1, n_c]
 
 %-------------------------------------------------------
@@ -129,7 +130,7 @@ mu_af  = [mu_if(1),mu_if,mu_if(n_c-1)];      % append boundary values
 % they will determing also the forces in cells) from facial values.  This
 % interpolation must be linear - I think because of the linear assumptions
 % made in the finite volume method.
-rho_c  = line_avg(rho_af);                   % recompute from face values
+% rho_c  = line_avg(rho_af);                   % recompute from face values
 
 % Work out vof at faces 
 % (If this is linear averaging, and rho_f is harmonic, 
@@ -181,18 +182,34 @@ end
 %-------------------------------
 % Discretize momentum equations
 %-------------------------------
-[a_u, t_u] = discretize_u(x_n, x_c, dx, dy, dz, dt, rho_c, mu_if);
+[a_u, t_u] = discretize_u(x_n, x_c, dx, dy, dz, dt, rho_c, mu_af);
+
+%---------------------------------------------------------
+% Discretize pressure equations if it is not over-relaxed
+% meaning it is formed before momentum is under-relaxed
+%----------------------------------------------------------
+if(strcmp(p_matrix, 'Pressure_Matrix_Default'))
+  % Units are: ms
+  a_p = discretize_p(x_c, dy, dz, dv, a_u, rho_if);
+end
 
 % Under-relax the discretized momentum equations
 for c=1:n_c
   a_u(c,c) = a_u(c,c) / urf_u;
 end
 
+%------------------------------------------------------
+% Discretize pressure equations if it is over-relaxed
+% meaning it is formed after momentum is under-relaxed
+%------------------------------------------------------
+if(! strcmp(p_matrix, 'Pressure_Matrix_Default'))
+  % Units are: ms
+  a_p = discretize_p(x_c, dy, dz, dv, a_u, rho_if);
+end
+
 %-------------------------------
 % Discretize pressure equations
 %-------------------------------
-% Units are: ms
-a_p = discretize_p(x_c, dy, dz, dv, a_u, rho_if);
 
 %----------------------
 %
@@ -272,6 +289,8 @@ for k = 1:n_steps
 
     % Units for velocity are: kg m/s^2 * s/kg = m/s
     u_c = pcg(a_u, b_u', tol_u, u_iters, [], [], u_c')';  % size = [1, n_c]
+
+    u_c_before_correctionn = u_c;
 
     if(exist('fig_u', 'var') == 1 && mod(i, iter_plot_int) == 0)
       plot_var(fig_u, 1, x_c, u_c, 'Cell Velocity Before Correction', i);

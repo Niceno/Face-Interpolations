@@ -4,9 +4,9 @@
 %
 %           |---o---|---o---|---o---|---o---|---o---|---o---|---o---|---o---|
 %  cells:       1       2       3       4       5       6       7       8
-%  faces:           1       2       3       4       5       6       7
+%  faces:   1       2       3       4       5       6       7       8       9
 %-------------------------------------------------------------------------------
-function [a_u, t_u] = discretize_u(x_n, x_c, dx, dy, dz, dt, rho_c, mu_if);
+function [a_u, t_u] = discretize_u(x_n, x_c, dx, dy, dz, dt, rho_c, mu_af);
 
   % Initialize sparse matrix
   a_u = diag(sparse(0));
@@ -35,14 +35,14 @@ function [a_u, t_u] = discretize_u(x_n, x_c, dx, dy, dz, dt, rho_c, mu_if);
 
     % This is the east side
     if(c < n_c)
-      a = mu_if(c) * dy(c) * dz(c) / (x_c(c+1)-x_c(c));
+      a = mu_af(c+1) * dy(c) * dz(c) / (x_c(c+1)-x_c(c));
       a_u(c,c+1) = -a;
       a_u(c,c)   =  a_u(c,c) + a;
     end
 
     % This is the west side
     if(c > 1)
-      a = mu_if(c-1) * dy(c) * dz(c) / (x_c(c)-x_c(c-1));
+      a = mu_af(c) * dy(c) * dz(c) / (x_c(c)-x_c(c-1));
       a_u(c,c-1) = -a;
       a_u(c,c)   =  a_u(c,c) + a;
     end
@@ -54,7 +54,10 @@ function [a_u, t_u] = discretize_u(x_n, x_c, dx, dy, dz, dt, rho_c, mu_if);
   % On the boundaries
   %
   %-------------------
-  a_u(1,1)     = a_u(1,1)     + dy(1)   * dz(1)   / (x_c(1)   - x_n(1));
-  a_u(n_c,n_c) = a_u(n_c,n_c) + dy(n_c) * dz(n_c) / (x_c(n_c) - x_n(n_c));
+  a_u(1,1)     = a_u(1,1) + mu_af(1) * dy(1) * dz(1)   ...
+               / (x_c(1) - x_n(1));
+
+  a_u(n_c,n_c) = a_u(n_c,n_c) + mu_af(n_c+1) * dy(n_c) * dz(n_c) ...
+               / (x_c(n_c) - x_n(n_c));
 
 end
