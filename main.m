@@ -147,11 +147,11 @@ vof_f = line_avg(vof_c);
 %----------------
 % Initial values
 %----------------
-u_c(1:n_c)  = 0.0;             % for velocities
+u_c(1:n_c)  = 0.0;                % for velocities
 u_if = line_avg(u_c);
-p_c(1:n_c)  = 0.0;             % for pressure
-pp_c(1:n_c) = 0.0;             % for pressure correction
-p_x = gradient_p(x_c, p_c);  % for pressure gradients
+p_c(1:n_c)  = 0.0;                % for pressure
+pp_c(1:n_c) = 0.0;                % for pressure correction
+p_x = gradient_p(x_n, x_c, p_c);  % for pressure gradients
 
 %---------------------------------------
 % Variables related to plotting results
@@ -300,6 +300,8 @@ for k = 1:n_steps
     % Form r.h.s. for pressure
     %--------------------------
 
+    u_if_before_flux = u_if';
+
     % Perform interpolation at a cell face
     switch(algor)
       case 'Linear_From_Velocities'
@@ -351,6 +353,8 @@ for k = 1:n_steps
     % Unit for b_p is: m/s * m^2 = m^3/s
     b_p = -diff(u_af) .* dy .* dz;
 
+    u_if_after_flux = u_if';
+
     if(mod(i, iter_plot_int) == 0)
       plot_var(fig_u, 2, x_if, u_if, 'Face Velocity Before Correction', i);
     end
@@ -378,8 +382,8 @@ for k = 1:n_steps
     %------------------------------------------------------
     % Calculate pressure and pressure correction gradients
     %------------------------------------------------------
-    p_x  = gradient_p(x_c, p_c);
-    pp_x = gradient_p(x_c, pp_c);
+    p_x  = gradient_p(x_n, x_c, p_c);
+    pp_x = gradient_p(x_n, x_c, pp_c);
 
     if(mod(i, iter_plot_int) == 0)
       plot_var(fig_p, 3, x_c, p_x,  'Pressure Gradient', i);
@@ -401,7 +405,7 @@ for k = 1:n_steps
     % Units for velocity: kg/(m s^2) * ms / m^2 * m^3 / kg = m/s
     for c=1:n_c-1
       a_f = 0.5 * (dy(c)*dz(c) + dy(c+1)*dz(c+1));
-      u_if(c) = u_if(c) + (pp_c(c+1) - pp_c(c)) * a_p(c,c+1) / (rho_if(c) * a_f);
+      u_if(c) = u_if(c) + (pp_c(c+1) - pp_c(c)) * a_p(c,c+1) / (a_f);
     end
 
     if(mod(i, iter_plot_int) == 0)
