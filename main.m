@@ -190,7 +190,7 @@ end
 %----------------------------------------------------------
 if(strcmp(p_matrix, 'Pressure_Matrix_Default'))
   % Units are: ms
-  a_p = discretize_p(x_c, dy, dz, dv, a_u, rho_if);
+  a_p = discretize_p(x_c, dy, dz, dv, a_u);
 end
 
 % Under-relax the discretized momentum equations
@@ -204,7 +204,7 @@ end
 %------------------------------------------------------
 if(! strcmp(p_matrix, 'Pressure_Matrix_Default'))
   % Units are: ms
-  a_p = discretize_p(x_c, dy, dz, dv, a_u, rho_if);
+  a_p = discretize_p(x_c, dy, dz, dv, a_u);
 end
 
 %-------------------------------
@@ -290,7 +290,7 @@ for k = 1:n_steps
     % Units for velocity are: kg m/s^2 * s/kg = m/s
     u_c = pcg(a_u, b_u', tol_u, u_iters, [], [], u_c')';  % size = [1, n_c]
 
-    u_c_before_correctionn = u_c;
+    u_c_before_correction = u_c;
 
     if(exist('fig_u', 'var') == 1 && mod(i, iter_plot_int) == 0)
       plot_var(fig_u, 1, x_c, u_c, 'Cell Velocity Before Correction', i);
@@ -348,8 +348,8 @@ for k = 1:n_steps
         do_something_completely_different ();
     end
 
-    % Unit for b_p is: kg/m^3 * m/s * m^2 = kg/s
-    b_p = -diff(rho_af .* u_af) .* dy .* dz;
+    % Unit for b_p is: m/s * m^2 = m^3/s
+    b_p = -diff(u_af) .* dy .* dz;
 
     if(mod(i, iter_plot_int) == 0)
       plot_var(fig_u, 2, x_if, u_if, 'Face Velocity Before Correction', i);
