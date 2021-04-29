@@ -12,7 +12,8 @@ function g_p = gradient_p(x_n, x_c, p_c)
   % Expand pressure to include boundary cells
   p_e = [p_c(1), p_c, p_c(n_c)];  % size = [1, n_c+2]
 
-
+  % Using excessive number of iterations (like in T-Flows)
+  % in order to get a better comparison between two codes
   for i=1:36
 
     % First calculate pressure gradients at faces inside and on the boundary
