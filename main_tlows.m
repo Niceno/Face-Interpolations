@@ -130,7 +130,7 @@ mu_af  = [mu_if(1),mu_if,mu_if(n_c-1)];      % append boundary values
 % they will determing also the forces in cells) from facial values.  This
 % interpolation must be linear - I think because of the linear assumptions
 % made in the finite volume method.
-% rho_c  = line_avg(rho_af);                   % recompute from face values
+rho_c  = line_avg(rho_af);                   % recompute from face values
 
 % Work out vof at faces 
 % (If this is linear averaging, and rho_f is harmonic, 

@@ -3,10 +3,10 @@
 # ( 2) n_steps,       number of time steps
 # ( 3) step_plot_int, unsteady results plotting interval (0 to skip)
 # ( 4) eps_st,        steady state tolerance
-    1.0e+5
+    1.0e+1
   100
-    1
-    1.0e-10
+   10
+    1.0e-15
 #--------[ simple algorithm related ]--------
 # ( 5) n_iters,       number of iterations in simple algorithm
 # ( 6) iter_plot_int, iteration plotting interval (0 to skip)
@@ -18,14 +18,14 @@
 # ( 8) urf_u,   under-relaxation factor for momentum
 # ( 9) u_iters, number of iterations for momentum solver
 # (10) tol_u,   tolerance for momentum solver
-    0.95
+    0.7
    60
-    1.0e-10
+    1.0e-12
 #--------[ pressure equation related ]--------
 # (11) urf_p,   under-relaxation factor for pressure
 # (12) p_iters, number of iterations for pressure solver
 # (13) tol_p,  tolerance for pressure solver
-    0.05
+    0.3
    60
-    1.0e-10
+    1.0e-12
 

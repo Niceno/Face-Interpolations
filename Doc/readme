@@ -695,6 +695,75 @@ and the summary of results is here:
 
 The results are indeed independent from under-relaxation without Majumdar.
 
+--------------------------------------------------------------------------------
 
+ANALYSIS 007                                              April 29, 11:32 CET
 
+Now is the time for some killer tests.  Like ... is discretization in the way
+it is done in T-Flows capable to bring velocities to zero in the case of body
+forces?
+
+I will first try to repeat that with main.m and flux_09... and flux_10...
+(schemes Rhie-Chow_Majumdar_Choi_Gu_From_Velocities and
+Rhie-Chow_Majumdar_Choi_Gu_From_Matrix) and if that works, switch to
+main_tflows.m and two schemes with Gu (Rhie-Chow_Choi_Gu_From_Velocities
+and Rhie-Chow_Choi_Gu_From_Matrix).
+
+So, a test main.m with:
+
+algorithm.def:
+
+Rhie-Chow_Majumdar_Choi_Gu_From_Velocities
+Pressure_Matrix_Default
+
+solver.par:
+
+#--------[ time stepping related ]--------
+# ( 1) dt,            time step
+# ( 2) n_steps,       number of time steps
+# ( 3) step_plot_int, unsteady results plotting interval (0 to skip)
+# ( 4) eps_st,        steady state tolerance
+    1.0e+1
+  100
+   10
+    1.0e-15
+#--------[ simple algorithm related ]--------
+# ( 5) n_iters,       number of iterations in simple algorithm
+# ( 6) iter_plot_int, iteration plotting interval (0 to skip)
+# ( 7) eps_dt,        outer iteration tolerance
+   60
+    0
+    1.0e-4
+#--------[ momentum equation related ]--------
+# ( 8) urf_u,   under-relaxation factor for momentum
+# ( 9) u_iters, number of iterations for momentum solver
+# (10) tol_u,   tolerance for momentum solver
+    0.7
+   60
+    1.0e-12
+#--------[ pressure equation related ]--------
+# (11) urf_p,   under-relaxation factor for pressure
+# (12) p_iters, number of iterations for pressure solver
+# (13) tol_p,  tolerance for pressure solver
+    0.3
+   60
+    1.0e-12
+
+Worked marvelously.  That means that forming the pressure matrix as in T-Flows
+should not prevent from properly balancing the forcs at face.
+
+Finally, a test most similar to T-Flows up to date, ran with main_tflows.m and
+algorithm.def reading:
+
+Rhie-Chow_Choi_Gu_From_Velocities
+Pressure_Matrix_Default
+
+Gave zero velocities too.  See also the: analysis_007_with_main_tflows.png
+
+Conclusions:
+
+Indeed, discretization of the pressure matrix as it is in T-Flows (thus from
+original entries in the matrix for momentum) and then, consequently, without
+Majumdar intervention, can lead to zero velocities and perfectly balanced
+forces and pressure.
 
