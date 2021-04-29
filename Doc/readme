@@ -46,7 +46,7 @@ converge too.
 a) Trying with "Linear_From_Velocities".  This failed to converge.  Please
    the convergence history in: analysis_001_a_linear_from_velocities.png
 
-b) Trying with "Linear_From_matrix".  This also failed to converge.  Please
+b) Trying with "Linear_From_Matrix".  This also failed to converge.  Please
    the convergence history in: analysis_001_b_linear_from_matrix.png
 
 c) Trying with "RC_Standard_From_Velocities".  This converged after 256 step.
@@ -561,5 +561,89 @@ Conclusions:
 This will all be tagged as revision "analysis_004".
 
 --------------------------------------------------------------------------------
+
+ANALYSIS 005                                              April 28, 07:14 CET
+
+It would be useful to see (double check, really) if Majumdar's correction is
+needed when pressure matrix is not over-relaxed, meaning not formed from the
+velocity matrix which is under-relaxed.
+
+I introduce new line in algorithms.def, which will read:
+
+Pressure_Matrix_Over_Relaxed, or
+Pressure_Matrix_Default
+
+with obvious meanings, and repeat ANALYSIS 003.  OK, so I did, reapeated the
+ANALYSIS_003, different under-relaxation, and obtained the followint results:
+for velocities with different under-relaxation factors:
+
+   2.8632e-04   2.8632e-04   2.8632e-04   2.8632e-04
+  -4.1660e-01  -4.1660e-01  -4.1660e-01  -4.1660e-01
+  -9.9029e-01  -9.9029e-01  -9.9029e-01  -9.9029e-01
+   2.7589e+00   2.7589e+00   2.7589e+00   2.7589e+00
+   1.4587e+01   1.4587e+01   1.4587e+01   1.4587e+01
+   1.6749e-02   1.6749e-02   1.6749e-02   1.6749e-02
+  -1.4582e+01  -1.4582e+01  -1.4582e+01  -1.4582e+01
+  -2.7878e+00  -2.7878e+00  -2.7878e+00  -2.7878e+00
+   9.4735e-01   9.4735e-01   9.4735e-01   9.4735e-01
+   4.6690e-01   4.6690e-01   4.6690e-01   4.6690e-01
+   4.6690e-01   4.6690e-01   4.6690e-01   4.6690e-01
+   9.4735e-01   9.4735e-01   9.4735e-01   9.4735e-01
+  -2.7878e+00  -2.7878e+00  -2.7878e+00  -2.7878e+00
+  -1.4582e+01  -1.4582e+01  -1.4582e+01  -1.4582e+01
+   1.6749e-02   1.6749e-02   1.6749e-02   1.6749e-02
+   1.4587e+01   1.4587e+01   1.4587e+01   1.4587e+01
+   2.7589e+00   2.7589e+00   2.7589e+00   2.7589e+00
+  -9.9029e-01  -9.9029e-01  -9.9029e-01  -9.9029e-01
+  -4.1660e-01  -4.1660e-01  -4.1660e-01  -4.1660e-01
+   2.8632e-04   2.8632e-04   2.8632e-04   2.8632e-04
+
+All is fine, results are independent.  But, what is pressure matrix is not
+over-relaxed?  It tuns out that the results are exaclty the same as before
+and identical to each other:
+
+   2.8632e-04   2.8632e-04   2.8632e-04   2.8632e-04
+  -4.1660e-01  -4.1660e-01  -4.1660e-01  -4.1660e-01
+  -9.9029e-01  -9.9029e-01  -9.9029e-01  -9.9029e-01
+   2.7589e+00   2.7589e+00   2.7589e+00   2.7589e+00
+   1.4587e+01   1.4587e+01   1.4587e+01   1.4587e+01
+   1.6749e-02   1.6749e-02   1.6749e-02   1.6749e-02
+  -1.4582e+01  -1.4582e+01  -1.4582e+01  -1.4582e+01
+  -2.7878e+00  -2.7878e+00  -2.7878e+00  -2.7878e+00
+   9.4735e-01   9.4735e-01   9.4735e-01   9.4735e-01
+   4.6690e-01   4.6690e-01   4.6690e-01   4.6690e-01
+   4.6690e-01   4.6690e-01   4.6690e-01   4.6690e-01
+   9.4735e-01   9.4735e-01   9.4735e-01   9.4735e-01
+  -2.7878e+00  -2.7878e+00  -2.7878e+00  -2.7878e+00
+  -1.4582e+01  -1.4582e+01  -1.4582e+01  -1.4582e+01
+   1.6749e-02   1.6749e-02   1.6749e-02   1.6749e-02
+   1.4587e+01   1.4587e+01   1.4587e+01   1.4587e+01
+   2.7589e+00   2.7589e+00   2.7589e+00   2.7589e+00
+  -9.9029e-01  -9.9029e-01  -9.9029e-01  -9.9029e-01
+  -4.1660e-01  -4.1660e-01  -4.1660e-01  -4.1660e-01
+   2.8632e-04   2.8632e-04   2.8632e-04   2.8632e-04
+
+This is quite suprising becase it is contrary to what I have obtained with
+T-Flows, talking about the case Menciner_And_Zun there.  It is probably so
+becuase the way I subtract pressure gradients in  T-Flows and here is not
+the same.  Or maybe there is a flaw in T-Flows?
+
+                                                          April 28, 07:14 CET
+
+OK, after a full day of careful analysis, I realized where is the difference.
+It has to do with the way when under-relaxed matrix is stored and when is used.
+In T-Flows, by default, momentum matrix is stored in m % sav before under-
+relaxation, and as such used in forming pressure matrix, computation of fluxes
+by Rhie and Chow method, and in correcting velocities.
+
+Here, if the option Pressure_Matrix_Default is engaged (to work like T-Flow),
+original (not under-relaxed) momentum matrix is used to form pressure matrix
+but under-relaxed version is used for Rhie and Chow interpolation and velocity
+corrections.
+
+I introduced an additional version of main.m, called main_tflows.m, which
+behaves like T-Flows, useful for code comparison and detailed analyses.
+
+
 
 
