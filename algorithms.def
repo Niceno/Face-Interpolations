@@ -1,15 +1,30 @@
-Rhie-Chow_Standard_From_Velocities
+Rhie-Chow_Choi_From_Velocities
 Pressure_Matrix_Default
 
 # Valid options are:
 Linear_From_Velocities
 Linear_From_Matrix
-Rhie-Chow_Standard_From_Velocities
-Rhie-Chow_Standard_From_Matrix
+
+# Plain Rhie and Chow
+Rhie-Chow_From_Velocities
+Rhie-Chow_From_Matrix
+
+# Rhie and Chow with Majumdar
 Rhie-Chow_Majumdar_From_Velocities
 Rhie-Chow_Majumdar_From_Matrix
+
+# Rhie and Chow with Majumdar and Choi
 Rhie-Chow_Majumdar_Choi_From_Velocities
 Rhie-Chow_Majumdar_Choi_From_Matrix
+
+# Rhie and Chow with Majumdar, Choi and Gu
 Rhie-Chow_Majumdar_Choi_Gu_From_Velocities
 Rhie-Chow_Majumdar_Choi_Gu_From_Matrix
+
+# Four cases without Majumdar:
+Rhie-Chow_Choi_From_Velocities
+Rhie-Chow_Choi_From_Matrix
+Rhie-Chow_Choi_Gu_From_Velocities
+Rhie-Chow_Choi_Gu_From_Matrix
+
 

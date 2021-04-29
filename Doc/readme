@@ -574,7 +574,7 @@ Pressure_Matrix_Over_Relaxed, or
 Pressure_Matrix_Default
 
 with obvious meanings, and repeat ANALYSIS 003.  OK, so I did, reapeated the
-ANALYSIS_003, different under-relaxation, and obtained the followint results:
+ANALYSIS 003, different under-relaxation, and obtained the followint results:
 for velocities with different under-relaxation factors:
 
    2.8632e-04   2.8632e-04   2.8632e-04   2.8632e-04
@@ -628,7 +628,7 @@ T-Flows, talking about the case Menciner_And_Zun there.  It is probably so
 becuase the way I subtract pressure gradients in  T-Flows and here is not
 the same.  Or maybe there is a flaw in T-Flows?
 
-                                                          April 28, 07:14 CET
+                                                          April 29, 06:03 CET
 
 OK, after a full day of careful analysis, I realized where is the difference.
 It has to do with the way when under-relaxed matrix is stored and when is used.
@@ -643,6 +643,57 @@ corrections.
 
 I introduced an additional version of main.m, called main_tflows.m, which
 behaves like T-Flows, useful for code comparison and detailed analyses.
+
+--------------------------------------------------------------------------------
+
+ANALYSIS 006                                              April 29, 06:22 CET
+
+Now when I can reproduce T-Flows behaviour from the script main_tflows.m, and
+when the numerical results seem to sugges that Majumdar's correction is not
+needed, that would be good to check.  I would need additional "flux_..."
+functions without Majumdar, and see how they work with main_tflows.
+
+Analysis will be conducted with main_tflows.m.
+
+
+This is the outline of tests:
+
++--------+------+------+------+------+
+|  set:  |  a)  |  b)  |  c)  |  d)  |
++--------+------+------+------+------+
+| urf_u: | 0.95 | 0.85 | 0.75 | 0.65 |
+| urf_p: | 0.05 | 0.15 | 0.25 | 0.35 |
++--------+------+------+------+------+
+
+I will use these algorithms:
+
+Rhie-Chow_Choi_From_Velocities
+Pressure_Matrix_Default
+
+and the summary of results is here:
+
+   1.4649e-01   1.4649e-01   1.4649e-01   1.4649e-01   1.4649e-01
+  -2.6353e-02  -2.6353e-02  -2.6353e-02  -2.6353e-02  -2.6353e-02
+  -9.0531e-01  -9.0531e-01  -9.0531e-01  -9.0531e-01  -9.0531e-01
+  -1.1076e+00  -1.1076e+00  -1.1076e+00  -1.1076e+00  -1.1076e+00
+   6.6386e+00   6.6386e+00   6.6386e+00   6.6386e+00   6.6386e+00
+   2.2569e+01   2.2569e+01   2.2569e+01   2.2569e+01   2.2569e+01
+  -2.2558e+01  -2.2558e+01  -2.2558e+01  -2.2558e+01  -2.2558e+01
+  -6.6605e+00  -6.6605e+00  -6.6605e+00  -6.6605e+00  -6.6605e+00
+   1.0197e+00   1.0197e+00   1.0197e+00   1.0197e+00   1.0197e+00
+   9.6003e-01   9.6003e-01   9.6003e-01   9.6003e-01   9.6003e-01
+   9.6003e-01   9.6003e-01   9.6003e-01   9.6003e-01   9.6003e-01
+   1.0197e+00   1.0197e+00   1.0197e+00   1.0197e+00   1.0197e+00
+  -6.6605e+00  -6.6605e+00  -6.6605e+00  -6.6605e+00  -6.6605e+00
+  -2.2558e+01  -2.2558e+01  -2.2558e+01  -2.2558e+01  -2.2558e+01
+   2.2569e+01   2.2569e+01   2.2569e+01   2.2569e+01   2.2569e+01
+   6.6386e+00   6.6386e+00   6.6386e+00   6.6386e+00   6.6386e+00
+  -1.1076e+00  -1.1076e+00  -1.1076e+00  -1.1076e+00  -1.1076e+00
+  -9.0531e-01  -9.0531e-01  -9.0531e-01  -9.0531e-01  -9.0531e-01
+  -2.6353e-02  -2.6353e-02  -2.6353e-02  -2.6353e-02  -2.6353e-02
+   1.4649e-01   1.4649e-01   1.4649e-01   1.4649e-01   1.4649e-01
+
+The results are indeed independent from under-relaxation without Majumdar.
 
 
 

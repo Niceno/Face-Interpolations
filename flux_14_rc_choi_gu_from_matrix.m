@@ -1,24 +1,29 @@
 %===============================================================================
-% Performs Rhie and Chow interpolation of momentum at faces, starting from
-% interpolated matrix entries.  It is one in the series of functions:
+% Performs Rhie and Chow, Choi and Gu's interpolation of momentum at faces,
+% starting from interpolated matrix entries.  It is one in the series of
+% functions:
 %
 %   flux_01_linear_from_velocities.m
 %   flux_02_linear_from_matrix.m
-%   flux_03_rc_standard_from_velocities.m
-%   flux_04_rc_standard_from_matrix.m
+%   flux_03_rc_from_velocities.m
+%   flux_04_rc_from_matrix.m
 %   flux_05_rc_majumdar_from_velocities.m
 %   flux_06_rc_majumdar_from_matrix.m
 %   flux_07_rc_majumdar_choi_from_velocities.m
 %   flux_08_rc_majumdar_choi_from_matrix.m
 %   flux_09_rc_majumdar_choi_gu_from_velocities.m
 %   flux_10_rc_majumdar_choi_gu_from_matrix.m
+%   flux_11_rc_choi_from_velocities.m
+%   flux_12_rc_choi_from_matrix.m
+%   flux_13_rc_choi_gu_from_velocities.m
+%   flux_14_rc_choi_gu_from_matrix.m
 %
 % which all contain evolutionary steps Mencinger and Zun were doing to (7)
 % and following equations in their paper in JCP from 2007.
 %-------------------------------------------------------------------------------
-function [u_if, u_af] = flux_04_rc_standard_from_matrix(  ...
-                        x_c, dv, urf_u, a_u, t_u, f_c,    ...
-                        u_c, u_c_o, u_c_star, p_c, p_x)
+function [u_if, u_af] = flux_14_rc_choi_from_matrix(       ...
+                        x_c, dv, urf_u, a_u, t_u, f_if,    ...
+                        u_c, u_if_o, u_if_star, p_c, p_x)
 
   % Fetch the system size
   n_c = size(u_c, 2);
@@ -42,10 +47,9 @@ function [u_if, u_af] = flux_04_rc_standard_from_matrix(  ...
   % m^3 / (kg/s) * N/m^3 = N s / kg = kg m/s^2 * s / kg = m/s
   % m/s
   % m^3 / (kg/s) * kg/(m^2 s^2) = m/s
-  u_if = line_avg(  u_til                            ...   % (7.1) in my notes
-                  + tu_au .* u_c_o                   ...   % (7.2 and 7.3)
-                  + dv_au .* f_c                     ...   % (7.4 and 7.5)
-                  + (1.0 - urf_u) * u_c_star)        ...   % (7.8)
+  u_if = line_avg(u_til)                             ...   % (7.1) in my notes
+       + line_avg(dv_au) .* f_if                     ...   % Gu
+       + line_avg(tu_au) .* u_if_o                   ...   % Choi
        - line_avg(dv_au) .* diff(p_c) ./ diff(x_c);        % Rhie and Chow
 
   u_af = [0.0,u_if,0.0];  % append boundary values (just zeroes now)
