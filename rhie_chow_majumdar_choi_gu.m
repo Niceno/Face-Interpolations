@@ -3,28 +3,20 @@
 % at faces, starting from interpolated velocities.  It is one in the
 % series of functions:
 %
-%   flux_01_linear_from_velocities.m
-%   flux_02_linear_from_matrix.m
-%   flux_03_rc_from_velocities.m
-%   flux_04_rc_from_matrix.m
-%   flux_05_rc_majumdar_from_velocities.m
-%   flux_06_rc_majumdar_from_matrix.m
-%   flux_07_rc_majumdar_choi_from_velocities.m
-%   flux_08_rc_majumdar_choi_from_matrix.m
-%   flux_09_rc_majumdar_choi_gu_from_velocities.m
-%   flux_10_rc_majumdar_choi_gu_from_matrix.m
-%   flux_11_rc_choi_from_velocities.m
-%   flux_12_rc_choi_from_matrix.m
-%   flux_13_rc_choi_gu_from_velocities.m
-%   flux_14_rc_choi_gu_from_matrix.m
+%   rhie_chow.m
+%   rhie_chow_majumdar.m
+%   rhie_chow_majumdar_choi.m
+%   rhie_chow_majumdar_choi_gu.m
+%   rhie_chow_choi.m
+%   rhie_chow_choi_gu.m
 %
 % which all contain evolutionary steps Mencinger and Zun were doing to (7)
 % and following equations in their paper in JCP from 2007.
 %-------------------------------------------------------------------------------
-function [u_if, u_af] = flux_09_rc_majumdar_choi_gu_from_velocities(  ...
-                        x_c, dv, urf_u, a_u, t_u, f_c, f_if,          ...
-                        u_c, u_c_o, u_c_star,                         ...
-                        u_if_o, u_if_star,                            ...
+function [u_if, u_af] = rhie_chow_majumdar_choi_gu(           ...
+                        x_c, dv, urf_u, a_u, t_u, f_c, f_if,  ...
+                        u_c, u_c_o, u_c_star,                 ...
+                        u_if_o, u_if_star,                    ...
                         p_c, p_x)
 
   % Form helping arrays

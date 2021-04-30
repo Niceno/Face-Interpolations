@@ -1,37 +1,23 @@
-Rhie-Chow_Choi_From_Velocities
-Pressure_Matrix_Default
+Rhie-Chow_Majumdar_Choi
 
 
-Rhie-Chow_Majumdar_Choi_From_Velocities
-Pressure_Matrix_Under_Relaxed
+Rhie-Chow_Choi
 
 
-Rhie-Chow_Choi_Gu_From_Velocities   <- the ultimate goal
+Rhie-Chow_Choi_Gu   <- the ultimate goal
+
 
 # Valid options are:
-Linear_From_Velocities
-Linear_From_Matrix
 
-# Plain Rhie and Chow
-Rhie-Chow_From_Velocities
-Rhie-Chow_From_Matrix
+Rhie-Chow
 
-# Rhie and Chow with Majumdar
-Rhie-Chow_Majumdar_From_Velocities
-Rhie-Chow_Majumdar_From_Matrix
+# The following three are suited for main.m
+Rhie-Chow_Majumdar
+Rhie-Chow_Majumdar_Choi
+Rhie-Chow_Majumdar_Choi_Gu
 
-# Rhie and Chow with Majumdar and Choi
-Rhie-Chow_Majumdar_Choi_From_Velocities
-Rhie-Chow_Majumdar_Choi_From_Matrix
-
-# Rhie and Chow with Majumdar, Choi and Gu
-Rhie-Chow_Majumdar_Choi_Gu_From_Velocities
-Rhie-Chow_Majumdar_Choi_Gu_From_Matrix
-
-# Four cases without Majumdar:
-Rhie-Chow_Choi_From_Velocities
-Rhie-Chow_Choi_From_Matrix
-Rhie-Chow_Choi_Gu_From_Velocities
-Rhie-Chow_Choi_Gu_From_Matrix
+# The following two are suited for main_tflows.m
+Rhie-Chow_Choi
+Rhie-Chow_Choi_Gu
 
 

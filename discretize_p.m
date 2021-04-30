@@ -19,7 +19,7 @@ function a_p = discretize_p(x_c, dy, dz, dv, a_u)
   %-------------------
   for c = 1:n_c
 
-    % Units: kg/m^3 * m * m^3 * s/kg = m/s
+    % Units: m * m^3 * s/kg = m^4 s / kg
 
     % East side
     if(c < n_c)
