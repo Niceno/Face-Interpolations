@@ -767,3 +767,216 @@ original entries in the matrix for momentum) and then, consequently, without
 Majumdar intervention, can lead to zero velocities and perfectly balanced
 forces and pressure.
 
+--------------------------------------------------------------------------------
+
+ANALYSIS 008                                              April 30, 10:16 CET
+
+I want to re-run cases with Choi to make sure they run like in analysis_004
+(get it with git checkout 7ad103321402641c24db90739ba4949021b4fa67)
+
+I will focus on dt = 0.1, 1, 10 and 100, since these seem to give a broad
+range of results.
+
+!-------------------------------------------!
+! Runs conducted with revision analysis_004 !
+!-------------------------------------------!
+
+solver.par:
+
+#--------[ time stepping related ]--------
+# ( 1) dt,            time step
+# ( 2) n_steps,       number of time steps
+# ( 3) step_plot_int, unsteady results plotting interval (0 to skip)
+# ( 4) eps_st,        steady state tolerance
+    1.0e-1
+10000
+  100
+    1.0e-10
+#--------[ simple algorithm related ]--------
+# ( 5) n_iters,       number of iterations in simple algorithm
+# ( 6) iter_plot_int, iteration plotting interval (0 to skip)
+# ( 7) eps_dt,        outer iteration tolerance
+   60
+    0
+    1.0e-6
+#--------[ momentum equation related ]--------
+# ( 8) urf_u,   under-relaxation factor for momentum
+# ( 9) u_iters, number of iterations for momentum solver
+# (10) tol_u,   tolerance for momentum solver
+    0.7
+   60
+    1.0e-12
+#--------[ pressure equation related ]--------
+# (11) urf_p,   under-relaxation factor for pressure
+# (12) p_iters, number of iterations for pressure solver
+# (13) tol_p,  tolerance for pressure solver
+    0.3
+   60
+    1.0e-12
+
+algorithms.def:
+
+Rhie-Chow_Majumdar_Choi_From_Velocities
+
+Results for all these old runs are summarized as:
+
+   2.5000e-03   7.8411e-04   8.2111e-04   6.2108e-04   4.7776e-04
+   7.5000e-03   1.7945e-01   1.9054e-01   1.0070e-01   3.6756e-02
+   1.2500e-02  -1.5660e+00  -1.4752e+00  -1.1455e+00  -9.2079e-01
+   1.7500e-02  -3.5315e+00  -3.2330e+00  -2.0568e+00  -1.2533e+00
+   2.2500e-02   8.9549e+00   8.6663e+00   7.5421e+00   6.7744e+00
+   2.7500e-02   4.9914e+01   4.6522e+01   3.3260e+01   2.4203e+01
+   3.2500e-02   4.7811e+00   1.3902e+00  -1.1869e+01  -2.0924e+01
+   3.7500e-02  -4.3344e+00  -4.6229e+00  -5.7510e+00  -6.5214e+00
+   4.2500e-02  -1.3072e+00  -1.0186e+00   1.0992e-01   8.8060e-01
+   4.7500e-02   3.7841e-01   4.5055e-01   7.3262e-01   9.2526e-01
+   5.2500e-02   3.7841e-01   4.5055e-01   7.3262e-01   9.2526e-01
+   5.7500e-02  -1.3072e+00  -1.0186e+00   1.0992e-01   8.8060e-01
+   6.2500e-02  -4.3344e+00  -4.6229e+00  -5.7510e+00  -6.5214e+00
+   6.7500e-02   4.7811e+00   1.3902e+00  -1.1869e+01  -2.0924e+01
+   7.2500e-02   4.9914e+01   4.6522e+01   3.3260e+01   2.4203e+01
+   7.7500e-02   8.9549e+00   8.6663e+00   7.5421e+00   6.7744e+00
+   8.2500e-02  -3.5315e+00  -3.2330e+00  -2.0568e+00  -1.2533e+00
+   8.7500e-02  -1.5660e+00  -1.4752e+00  -1.1455e+00  -9.2079e-01
+   9.2500e-02   1.7945e-01   1.9054e-01   1.0070e-01   3.6756e-02
+   9.7500e-02   7.8411e-04   8.2111e-04   6.2108e-04   4.7776e-04
+
+!-------------------------------------!
+! Runs conducted with current version !
+!   (should be the same as the old)   !
+!-------------------------------------!
+
+solver.par: the same as above!
+
+algorithms.def:
+
+Rhie-Chow_Majumdar_Choi_From_Velocities
+Pressure_Matrix_Under_Relaxed
+
+run main.m!
+
+Results from the new runs can be summarized as:
+
+   2.5000e-03   2.4180e-01   2.3063e-01   1.8550e-01   1.5268e-01
+   7.5000e-03   7.9563e-02   6.6970e-02   1.6525e-02  -1.9613e-02
+   1.2500e-02  -1.6102e+00  -1.5227e+00  -1.1808e+00  -9.4741e-01
+   1.7500e-02  -3.5295e+00  -3.2292e+00  -2.0547e+00  -1.2524e+00
+   2.2500e-02   8.9600e+00   8.6721e+00   7.5462e+00   6.7774e+00
+   2.7500e-02   4.9915e+01   4.6523e+01   3.3261e+01   2.4204e+01
+   3.2500e-02   4.7812e+00   1.3903e+00  -1.1869e+01  -2.0924e+01
+   3.7500e-02  -4.3345e+00  -4.6230e+00  -5.7511e+00  -6.5215e+00
+   4.2500e-02  -1.3072e+00  -1.0186e+00   1.0992e-01   8.8060e-01
+   4.7500e-02   3.7842e-01   4.5056e-01   7.3263e-01   9.2527e-01
+   5.2500e-02   3.7842e-01   4.5056e-01   7.3263e-01   9.2527e-01
+   5.7500e-02  -1.3072e+00  -1.0186e+00   1.0992e-01   8.8060e-01
+   6.2500e-02  -4.3345e+00  -4.6230e+00  -5.7511e+00  -6.5215e+00
+   6.7500e-02   4.7812e+00   1.3903e+00  -1.1869e+01  -2.0924e+01
+   7.2500e-02   4.9915e+01   4.6523e+01   3.3261e+01   2.4204e+01
+   7.7500e-02   8.9600e+00   8.6721e+00   7.5462e+00   6.7774e+00
+   8.2500e-02  -3.5295e+00  -3.2292e+00  -2.0547e+00  -1.2524e+00
+   8.7500e-02  -1.6102e+00  -1.5227e+00  -1.1808e+00  -9.4741e-01
+   9.2500e-02   7.9563e-02   6.6970e-02   1.6525e-02  -1.9613e-02
+   9.7500e-02   2.4180e-01   2.3063e-01   1.8550e-01   1.5268e-01
+
+You can also find these results in graphs: analysis_008_old_results.agr and
+analysis_008_new_results.agr.  There are some small differences close to walls,
+but I reckon that is because new version uses iterative calculation of pressure
+gradients.
+
+!----------------------------------------------!
+! Runs with the new version with under-relaxed !
+! matrix instead of Majumdar and main.m script !
+!----------------------------------------------!
+
+OK, now how about using default matrix instead of Majumdar?  Like, I saw it
+worked in ANALYSIS 006, but how about a direct comparison?
+
+solver.par: the same as above!
+
+algorithms.def:
+
+Rhie-Chow_Choi_From_Velocities
+Pressure_Matrix_Default
+
+script: main.m
+
+The results are summarized here:
+
+   2.5000e-03  -2.8554e+00   3.0206e-03  -4.4790e-03   5.8253e-02
+   7.5000e-03   3.1042e+00   1.1239e-02   1.2987e-01   1.0197e-01
+   1.2500e-02  -3.8116e+00  -1.7459e-01  -8.3045e-02  -4.0653e-01
+   1.7500e-02   5.1175e+00   1.2700e+00  -1.8083e+00  -1.5233e+00
+   2.2500e-02  -7.2260e+00  -6.4796e+00   1.0354e+00   3.3190e+00
+   2.7500e-02   1.0336e+01   2.1589e+01   2.4996e+01   2.1085e+01
+   3.2500e-02  -1.1430e+00  -3.8652e+00  -1.2608e+01  -1.8924e+01
+   3.7500e-02  -9.7218e-01  -2.2191e+00  -3.3160e+00  -3.5519e+00
+   4.2500e-02   1.1676e-02   1.1766e-01   7.5685e-01   1.2733e+00
+   4.7500e-02   8.9288e-02   2.1074e-01   3.2373e-01   3.5317e-01
+   5.2500e-02   8.9288e-02   2.1074e-01   3.2373e-01   3.5317e-01
+   5.7500e-02   1.1676e-02   1.1766e-01   7.5685e-01   1.2733e+00
+   6.2500e-02  -9.7218e-01  -2.2191e+00  -3.3160e+00  -3.5519e+00
+   6.7500e-02  -1.1430e+00  -3.8652e+00  -1.2608e+01  -1.8924e+01
+   7.2500e-02   1.0336e+01   2.1589e+01   2.4996e+01   2.1085e+01
+   7.7500e-02  -7.2260e+00  -6.4796e+00   1.0354e+00   3.3190e+00
+   8.2500e-02   5.1175e+00   1.2700e+00  -1.8083e+00  -1.5233e+00
+   8.7500e-02  -3.8116e+00  -1.7459e-01  -8.3045e-02  -4.0653e-01
+   9.2500e-02   3.1042e+00   1.1239e-02   1.2987e-01   1.0197e-01
+   9.7500e-02  -2.8554e+00   3.0206e-03  -4.4790e-03   5.8253e-02
+
+Which is a complete mess. (Also in: analysis_008_new_majumdar_from_matrix.dat
+and analysis_008_new_majumdar_from_matrix.agr)
+
+!----------------------------------------------!
+! Runs with the new version with under-relaxed !
+! matrix instead of Majumdar and main_tflow.m  !
+!----------------------------------------------!
+
+solver.par: the same as above!
+
+algorithms.def: same as above!
+
+script: main_tflows.m
+
+The results are summarized here:
+
+
+   2.5000e-03   2.4180e-01   2.3063e-01   1.8550e-01   1.5268e-01
+   7.5000e-03   7.9563e-02   6.6970e-02   1.6525e-02  -1.9613e-02
+   1.2500e-02  -1.6102e+00  -1.5227e+00  -1.1808e+00  -9.4741e-01
+   1.7500e-02  -3.5295e+00  -3.2292e+00  -2.0547e+00  -1.2524e+00
+   2.2500e-02   8.9600e+00   8.6721e+00   7.5462e+00   6.7774e+00
+   2.7500e-02   4.9915e+01   4.6523e+01   3.3261e+01   2.4204e+01
+   3.2500e-02   4.7812e+00   1.3903e+00  -1.1869e+01  -2.0924e+01
+   3.7500e-02  -4.3345e+00  -4.6230e+00  -5.7511e+00  -6.5215e+00
+   4.2500e-02  -1.3072e+00  -1.0186e+00   1.0992e-01   8.8060e-01
+   4.7500e-02   3.7842e-01   4.5056e-01   7.3263e-01   9.2527e-01
+   5.2500e-02   3.7842e-01   4.5056e-01   7.3263e-01   9.2527e-01
+   5.7500e-02  -1.3072e+00  -1.0186e+00   1.0992e-01   8.8060e-01
+   6.2500e-02  -4.3345e+00  -4.6230e+00  -5.7511e+00  -6.5215e+00
+   6.7500e-02   4.7812e+00   1.3903e+00  -1.1869e+01  -2.0924e+01
+   7.2500e-02   4.9915e+01   4.6523e+01   3.3261e+01   2.4204e+01
+   7.7500e-02   8.9600e+00   8.6721e+00   7.5462e+00   6.7774e+00
+   8.2500e-02  -3.5295e+00  -3.2292e+00  -2.0547e+00  -1.2524e+00
+   8.7500e-02  -1.6102e+00  -1.5227e+00  -1.1808e+00  -9.4741e-01
+   9.2500e-02   7.9563e-02   6.6970e-02   1.6525e-02  -1.9613e-02
+   9.7500e-02   2.4180e-01   2.3063e-01   1.8550e-01   1.5268e-01
+
+(Also in: analysis_008_new_majumdar_from_matrix_tflows.dat and
+analysis_008_new_majumdar_from_matrix_tflows.agr) which are fine :-)
+
+There should be no surprise about it, the reason I introduced main_tflows.m
+WAS to work around these problems.  (I forgot how exactly did I do that,
+should read somewhere above.)
+
+Conclusions:
+
+- Code can still reproduce ANALYSIS 004, with both main.m and main_tflows.m
+
+- Don't randomply mix versions of the scripts (main.m vs main_tflows.m) with
+  the way matrices are treated.  They are incompatible with each other and can
+  give surprising results, like above.
+
+- It would be good to make reduced versions of both scripts, as well as
+  reduced number of flux_... functinons, to remove confusion and all.
+
+This will all be tagged as revision "analysis_008".
