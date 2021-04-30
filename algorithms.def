@@ -1,5 +1,12 @@
-Rhie-Chow_Choi_Gu_From_Velocities
+Rhie-Chow_Choi_From_Velocities
 Pressure_Matrix_Default
+
+
+Rhie-Chow_Majumdar_Choi_From_Velocities
+Pressure_Matrix_Under_Relaxed
+
+
+Rhie-Chow_Choi_Gu_From_Velocities   <- the ultimate goal
 
 # Valid options are:
 Linear_From_Velocities
