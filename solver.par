@@ -4,8 +4,8 @@
 # ( 3) step_plot_int, unsteady results plotting interval (0 to skip)
 # ( 4) eps_st,        steady state tolerance
     1.0e-1
-10000
-  100
+  200
+   20
     1.0e-4 
 #--------[ simple algorithm related ]--------
 # ( 5) n_iters,       number of iterations in simple algorithm
