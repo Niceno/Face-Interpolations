@@ -54,6 +54,9 @@ clear
 
 g = 10.0;  % gravitational constant
 
+u_west = 0.0;
+u_east = 0.0;
+
 %-------------------
 % Solver parameters
 %-------------------
@@ -218,7 +221,9 @@ for k = 1:n_steps
     %-------------------------------
     % Discretize momentum equations
     %-------------------------------
-    [a_u, t_u] = discretize_u(x_n, x_c, dx, dy, dz, dt, rho_c_i, mu_af);
+    [a_u, t_u, b_u] = discretize_u(x_n, x_c, dx, dy, dz, dt,  ...
+                                   rho_c_i, mu_af,            ...
+                                   u_west, u_east);
 
     % Store original matrix like you would do in T-Flows
     m_u = a_u';
