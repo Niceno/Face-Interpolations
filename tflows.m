@@ -210,7 +210,7 @@ for k = 1:n_steps
   % Loop over inner iterations
   %
   %----------------------------
-  for i = 1:n_iters
+  for iter = 1:n_iters
 
     %-----------------------------------------
     % Initialize right-hand side for momentum
@@ -268,7 +268,7 @@ for k = 1:n_steps
 
     % Store initial residual for this time step
     % (I use the same name as Mencinger and Zun)
-    if(i == 1) r_n_0 = norm(a_u * u_n' - b_u'); end
+    if(iter == 1) r_n_0 = norm(a_u * u_n' - b_u'); end
     if(k == 1) r_1_0 = r_n_0; end
 
     %--------------------------
@@ -278,8 +278,9 @@ for k = 1:n_steps
     % Units for velocity are: kg m/s^2 * s/kg = m/s
     u_n = pcg(a_u, b_u', tol_u, u_iters, [], [], u_n')';  % size = [1, n_c]
 
-    if(exist('fig_u', 'var') == 1 && mod(i, iter_plot_int) == 0)
-      plot_var(fig_u, 1, x_c, u_n, 'Cell Velocity Before Correction', i);
+    if(exist('fig_u', 'var') == 1 && mod(iter, iter_plot_int) == 0)
+      plot_var(fig_u, 1, x_c, u_n, 'Cell Velocity Before Correction',  ...
+                                   iter / iter_plot_int);
     end
 
     %--------------------------
@@ -313,8 +314,9 @@ for k = 1:n_steps
     % Unit for b_p is: m^3/s
     b_p = -diff(v_flux_af_n);
 
-    if(mod(i, iter_plot_int) == 0)
-      plot_var(fig_u, 2, x_if, v_flux_if_n, 'Face Flux Before Correction', i);
+    if(mod(iter, iter_plot_int) == 0)
+      plot_var(fig_u, 2, x_if, v_flux_if_n, 'Face Flux Before Correction',  ...
+                                            iter / iter_plot_int);
     end
 
     %-------------------------------
@@ -323,8 +325,9 @@ for k = 1:n_steps
     % Units for pressure are: kg/s / (ms) = kg/(m s^2)
     pp_c = pcg(a_p, b_p', tol_p, p_iters, [], [], pp_c')';  % size = [1, n_c]
 
-    if(mod(i, iter_plot_int) == 0)
-      plot_var(fig_p, 1, x_c, pp_c, 'Pressure Correction', i);
+    if(mod(iter, iter_plot_int) == 0)
+      plot_var(fig_p, 1, x_c, pp_c, 'Pressure Correction',  ...
+                                    iter / iter_plot_int);
     end
 
     %---------------------------
@@ -333,8 +336,9 @@ for k = 1:n_steps
     % Unit for pressure: N/m^2 = kg m/s^2 / m^2 = kg/(m s^2)
     p_c = p_c + pp_c * urf_p;
 
-    if(mod(i, iter_plot_int) == 0)
-      plot_var(fig_p, 2, x_c, p_c, 'Pressure', i);
+    if(mod(iter, iter_plot_int) == 0)
+      plot_var(fig_p, 2, x_c, p_c, 'Pressure',  ...
+                                   iter / iter_plot_int);
     end
 
     %------------------------------------------------------
@@ -343,9 +347,11 @@ for k = 1:n_steps
     p_x  = gradient_p(x_n, x_c, p_c);
     pp_x = gradient_p(x_n, x_c, pp_c);
 
-    if(mod(i, iter_plot_int) == 0)
-      plot_var(fig_p, 3, x_c, p_x,  'Pressure Gradient', i);
-      plot_var(fig_p, 4, x_c, pp_x, 'Pressure Correction Gradient', i);
+    if(mod(iter, iter_plot_int) == 0)
+      plot_var(fig_p, 3, x_c, p_x,  'Pressure Gradient',  ...
+                                    iter / iter_plot_int);
+      plot_var(fig_p, 4, x_c, pp_x, 'Pressure Correction Gradient',  ...
+                                   iter / iter_plot_int);
     end
 
     %-------------------------
@@ -353,8 +359,9 @@ for k = 1:n_steps
     %-------------------------
     u_n = u_n - pp_x .* dv ./ spdiags(m_u, 0)';
 
-    if(mod(i, iter_plot_int) == 0)
-      plot_var(fig_u, 3, x_c, u_n, 'Cell Velocity After Correction', i);
+    if(mod(iter, iter_plot_int) == 0)
+      plot_var(fig_u, 3, x_c, u_n, 'Cell Velocity After Correction',  ...
+                                   iter / iter_plot_int);
     end
 
     %-------------------------
@@ -365,8 +372,9 @@ for k = 1:n_steps
       v_flux_if_n(c) = v_flux_if_n(c) + (pp_c(c+1) - pp_c(c)) * a_p(c,c+1);
     end
 
-    if(mod(i, iter_plot_int) == 0)
-      plot_var(fig_u, 4, x_if, v_flux_if_n, 'Face Flux After Correction', i);
+    if(mod(iter, iter_plot_int) == 0)
+      plot_var(fig_u, 4, x_if, v_flux_if_n, 'Face Flux After Correction',  ...
+                                            iter/iter_plot_int);
     end
 
     % Work out residuals in the current iteration
@@ -423,7 +431,7 @@ title(['Convergence History With ', strrep(algor, '_', ' '), ...
        ' and dt=', mat2str(dt)]);
 
 % Place legends to plots
-if(mod(i, iter_plot_int) == 0)
+if(mod(iter, iter_plot_int) == 0)
   figure(fig_u);  legend(iter_leg);
   figure(fig_p);  legend(iter_leg);
 end
