@@ -48,8 +48,9 @@
 %
 %  6. Unknowns, as the least accurate, come last
 %
-%     u_c, u_c_o, u_c_star, u_if, u_af, p_c
+%     u_c, u_c_o, u_if, u_af, p_c
 %-------------------------------------------------------------------------------
+clear
 
 g = 10.0;  % gravitational constant
 
@@ -110,16 +111,17 @@ dv = dx .* dy .* dz;             % size = [1, n_c]
 % Distribution of physical properties on numerical mesh
 %-------------------------------------------------------
 
-% Set some "initial" values in the cell centers
+% Set some "initial" values in the cell centers ("_c").
+% For density, this will be used for inertial term ("_i")
 % (See the next comment)
-rho_c = vof_c * rho_air + (1-vof_c) * rho_water;  % density at cells
-mu_c  = vof_c * mu_air  + (1-vof_c) * mu_water;   % visosity at cells
+rho_c_i = vof_c * rho_air + (1-vof_c) * rho_water;  % density at cells
+mu_c    = vof_c * mu_air  + (1-vof_c) * mu_water;   % visosity at cells
 
 % Work out the values in the faces.  Here you can use linear or harmonic mean
 % You could have, in fact, started from prescribing physical properties from
 % faces, which would make sense only if you initially prescribed vof in faces.
 % (I am not sure, maybe it is something worth considering, could be.)
-rho_if = harm_avg(rho_c);                    % density at inner faces
+rho_if = harm_avg(rho_c_i);                  % density at inner faces
 rho_af = [rho_if(1),rho_if,rho_if(n_c-1)];   % append boundary values
 
 mu_if  = harm_avg(mu_c);                     % viscosity at inner faces
@@ -132,8 +134,10 @@ mu_af  = [mu_if(1),mu_if,mu_if(n_c-1)];      % append boundary values
 %   interpolation must be linear - I think because of the linear assumptions
 %   made in the finite volume method.
 %
+%   The suffix "_f" means this density is used to compute facial forces
+%
 %-------------------------------------------------------------------------------
-% rho_c  = line_avg(rho_af);                   % recompute from face values
+rho_c_f  = line_avg(rho_af);                 % recompute from face values
 
 % Work out vof at faces 
 % (If this is linear averaging, and rho_f is harmonic, 
@@ -185,19 +189,22 @@ end
 %-------------------------------
 % Discretize momentum equations
 %-------------------------------
-[a_u, t_u] = discretize_u(x_n, x_c, dx, dy, dz, dt, rho_c, mu_af);
+[a_u, t_u] = discretize_u(x_n, x_c, dx, dy, dz, dt, rho_c_i, mu_af);
+
+% Store original matrix like you would do in T-Flows
+m_u = a_u';
+
+%--------------------------------------
+% Discretize pressure equations before
+%  momentum system was under-relaxed
+%--------------------------------------
+% Units are: m^4 s / kg
+a_p = discretize_p(x_c, dy, dz, dv, a_u);
 
 % Under-relax the discretized momentum equations
 for c=1:n_c
   a_u(c,c) = a_u(c,c) / urf_u;
 end
-
-%--------------------------------------
-% Discretize pressure equations after
-%  momentum system was under-relaxed
-%--------------------------------------
-% Units are: m^4 s / kg
-a_p = discretize_p(x_c, dy, dz, dv, a_u);
 
 %----------------------
 %
@@ -227,10 +234,6 @@ for k = 1:n_steps
   %----------------------------
   for i = 1:n_iters
 
-    % Store velocity from last iteration (suffix "star")
-    u_c_star  = u_c;
-    u_if_star = u_if;
-
     %-----------------------------------------
     % Initialize right-hand side for momentum
     %-----------------------------------------
@@ -241,7 +244,7 @@ for k = 1:n_steps
     % Add unsteady term to the right hand side
     %------------------------------------------
     % Unit for unstead term: kg/(m^3) * m^3 * m / s / s = kg m/s^2
-    b_u = b_u + rho_c .* dv .* u_c_o / dt;
+    b_u = b_u + rho_c_i .* dv .* u_c_o / dt;
 
     %------------------------------------------
     % Add pressure terms to momentum equations
@@ -254,7 +257,7 @@ for k = 1:n_steps
     %------------------------------------------------------
     % Unit for b_u is: m/s^2 * kg/m^3 * m^3 = kg m/s^2 = N
     f_if = g * rho_if;   % kg/m^3 * m/s^2 = kg/(m^2 s^2) = N/m^3
-    f_c  = g * rho_c;    % kg/m^3 * m/s^2 = kg/(m^2 s^2) = N/m^3
+    f_c  = g * rho_c_f;  % kg/m^3 * m/s^2 = kg/(m^2 s^2) = N/m^3
     b_u  = b_u + f_c .* dv;
 
     % Under-relax forces in momentum equations
@@ -278,8 +281,6 @@ for k = 1:n_steps
     % Units for velocity are: kg m/s^2 * s/kg = m/s
     u_c = pcg(a_u, b_u', tol_u, u_iters, [], [], u_c')';  % size = [1, n_c]
 
-    u_c_before_correction = u_c;
-
     if(exist('fig_u', 'var') == 1 && mod(i, iter_plot_int) == 0)
       plot_var(fig_u, 1, x_c, u_c, 'Cell Velocity Before Correction', i);
     end
@@ -288,41 +289,23 @@ for k = 1:n_steps
     % Form r.h.s. for pressure
     %--------------------------
 
-    u_if_before_flux = u_if';
-
     % Perform interpolation at a cell face
     switch(algor)
       case 'Rhie-Chow'
         [u_if, u_af] = rhie_chow(                            ...
-                       x_c, dv, a_u,                         ...
+                       x_c, dv, m_u,                         ...
                        u_c, p_c, p_x);
-      case 'Rhie-Chow_Majumdar'
-        [u_if, u_af] = rhie_chow_majumdar(                   ...
-                       x_c, dv, urf_u, a_u,                  ...
-                       u_c, u_c_star, u_if_star, p_c, p_x);
-      case 'Rhie-Chow_Majumdar_Choi'
-        [u_if, u_af] = rhie_chow_majumdar_choi(              ...
-                       x_c, dv, urf_u, a_u, t_u,             ...
-                       u_c, u_c_o, u_c_star,                 ...
-                       u_if_o, u_if_star,                    ...
-                       p_c, p_x);
-      case 'Rhie-Chow_Majumdar_Choi_Gu'
-        [u_if, u_af] = rhie_chow_majumdar_choi_gu(           ...
-                       x_c, dv, urf_u, a_u, t_u, f_c, f_if,  ...
-                       u_c, u_c_o, u_c_star,                 ...
-                       u_if_o, u_if_star,                    ...
-                       p_c, p_x);
       case 'Rhie-Chow_Choi'
         [u_if, u_af] = rhie_chow_choi(                       ...
-                       x_c, dv, urf_u, a_u, t_u,             ...
-                       u_c, u_c_o, u_c_star,                 ...
-                       u_if_o, u_if_star,                    ...
+                       x_c, dv, urf_u, m_u, t_u,             ...
+                       u_c, u_c_o,                           ...
+                       u_if_o,                               ...
                        p_c, p_x);
       case 'Rhie-Chow_Choi_Gu'
         [u_if, u_af] = rhie_chow_choi_gu(                    ...
-                       x_c, dv, urf_u, a_u, t_u, f_c, f_if,  ...
-                       u_c, u_c_o, u_c_star,                 ...
-                       u_if_o, u_if_star,                    ...
+                       x_c, dv, urf_u, m_u, t_u, f_c, f_if,  ...
+                       u_c, u_c_o,                           ...
+                       u_if_o,                               ...
                        p_c, p_x);
       otherwise
         do_something_completely_different ();
@@ -330,8 +313,6 @@ for k = 1:n_steps
 
     % Unit for b_p is: m/s * m^2 = m^3/s
     b_p = -diff(u_af) .* dy .* dz;
-
-    u_if_after_flux = u_if';
 
     if(mod(i, iter_plot_int) == 0)
       plot_var(fig_u, 2, x_if, u_if, 'Face Velocity Before Correction', i);
@@ -371,7 +352,7 @@ for k = 1:n_steps
     %-------------------------
     % Correct cell velocities
     %-------------------------
-    u_c = u_c - pp_x .* dv ./ spdiags(a_u, 0)';
+    u_c = u_c - pp_x .* dv ./ spdiags(m_u, 0)';
 
     if(mod(i, iter_plot_int) == 0)
       plot_var(fig_u, 3, x_c, u_c, 'Cell Velocity After Correction', i);
@@ -418,11 +399,11 @@ for k = 1:n_steps
   printf('Residual to steady state: %E\n', res_st);
   o_res = [o_res, res_st];
   if(res_st < eps_st)
-    printf('#======================\n');
-    printf('#                      \n');
-    printf('# Steady State Reached \n');
-    printf('#                      \n');
-    printf('#======================\n');
+    printf('#=====================================\n');
+    printf('#                                     \n');
+    printf('# Steady State Reached In %d Steps \n', k);
+    printf('#                                     \n');
+    printf('#=====================================\n');
     break;
   end
 
