@@ -183,32 +183,6 @@ end
 
 %----------------------
 %
-% Discretize equations
-%
-%----------------------
-
-%-------------------------------
-% Discretize momentum equations
-%-------------------------------
-[a_u, t_u] = discretize_u(x_n, x_c, dx, dy, dz, dt, rho_c_i, mu_af);
-
-% Store original matrix like you would do in T-Flows
-m_u = a_u';
-
-%--------------------------------------
-% Discretize pressure equations before
-%  momentum system was under-relaxed
-%--------------------------------------
-% Units are: m^4 s / kg
-a_p = discretize_p(x_c, dy, dz, dv, a_u);
-
-% Under-relax the discretized momentum equations
-for c=1:n_c
-  a_u(c,c) = a_u(c,c) / urf_u;
-end
-
-%----------------------
-%
 % Loop over time steps
 %
 %----------------------
@@ -240,6 +214,26 @@ for k = 1:n_steps
     %-----------------------------------------
     % Unit for a_u is kg/s (see inside function for details)
     b_u(1:n_c) = 0.0;
+
+    %-------------------------------
+    % Discretize momentum equations
+    %-------------------------------
+    [a_u, t_u] = discretize_u(x_n, x_c, dx, dy, dz, dt, rho_c_i, mu_af);
+
+    % Store original matrix like you would do in T-Flows
+    m_u = a_u';
+
+    %--------------------------------------
+    % Discretize pressure equations before
+    %  momentum system was under-relaxed
+    %--------------------------------------
+    % Units are: m^4 s / kg
+    a_p = discretize_p(x_c, dy, dz, dv, a_u);
+
+    % Under-relax the discretized momentum equations
+    for c=1:n_c
+      a_u(c,c) = a_u(c,c) / urf_u;
+    end
 
     %------------------------------------------
     % Add unsteady term to the right hand side
