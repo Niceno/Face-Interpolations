@@ -48,7 +48,7 @@
 %
 %  6. Unknowns, as the least accurate, come last
 %
-%     u_c, u_c_o, u_if, u_af, p_c
+%     u_n, u_o, v_flux_if_n, v_flux_af_n, p_c
 %-------------------------------------------------------------------------------
 clear
 
@@ -102,10 +102,11 @@ x_n  = l*(0:n_c)/n_c;  % node coordinates,       size = [1, n_c+1]
 x_c  = line_avg(x_n);  % cell coordinates,       size = [1, n_c]
 x_if = line_avg(x_c);  % inner face coordinates, size = [1, n_c-1]
 
-dx = x_n(2:end) - x_n(1:end-1);  % size = [1, n_c]
-dy = dx * 2000.0;                % size = [1, n_c]
-dz = dx * 2000.0;                % size = [1, n_c]
-dv = dx .* dy .* dz;             % size = [1, n_c]
+dx    = x_n(2:end) - x_n(1:end-1);  % size = [1, n_c]
+dy    = dx * 2000.0;                % size = [1, n_c]
+dz    = dx * 2000.0;                % size = [1, n_c]
+dv    = dx .* dy .* dz;             % size = [1, n_c]
+sx_if = line_avg(dy .* dz);         % size = [1, n_c-1]
 
 %-------------------------------------------------------
 % Distribution of physical properties on numerical mesh
@@ -154,11 +155,11 @@ vof_f = line_avg(vof_c);
 %----------------
 % Initial values
 %----------------
-u_c(1:n_c)  = 0.0;                % for velocities
-u_if = line_avg(u_c);
-p_c(1:n_c)  = 0.0;                % for pressure
-pp_c(1:n_c) = 0.0;                % for pressure correction
-p_x = gradient_p(x_n, x_c, p_c);  % for pressure gradients
+u_n(1:n_c)  = 0.0;                     % for velocities
+v_flux_if_n = line_avg(u_n) .* sx_if;  % volume fluxes at inner faces [m^3/s]
+p_c(1:n_c)  = 0.0;                     % for pressure
+pp_c(1:n_c) = 0.0;                     % for pressure correction
+p_x = gradient_p(x_n, x_c, p_c);       % for pressure gradients
 
 %---------------------------------------
 % Variables related to plotting results
@@ -224,8 +225,8 @@ for k = 1:n_steps
   printf('#======================\n');
 
   % Store the last time step as old (suffix "o")
-  u_c_o  = u_c;
-  u_if_o = u_if;
+  u_o  = u_n;
+  v_flux_o = v_flux_if_n;
 
   %----------------------------
   %
@@ -244,7 +245,7 @@ for k = 1:n_steps
     % Add unsteady term to the right hand side
     %------------------------------------------
     % Unit for unstead term: kg/(m^3) * m^3 * m / s / s = kg m/s^2
-    b_u = b_u + rho_c_i .* dv .* u_c_o / dt;
+    b_u = b_u + rho_c_i .* dv .* u_o / dt;
 
     %------------------------------------------
     % Add pressure terms to momentum equations
@@ -263,26 +264,23 @@ for k = 1:n_steps
     % Under-relax forces in momentum equations
     % (a_u is already divided by urf_u above)
     for c=1:n_c
-      b_u(c) = b_u(c) + (1.0-urf_u) * a_u(c,c) * u_c(c);
+      b_u(c) = b_u(c) + (1.0-urf_u) * a_u(c,c) * u_n(c);
     end
 
     % Store initial residual for this time step
     % (I use the same name as Mencinger and Zun)
-    if(i == 1) r_n_0 = norm(a_u * u_c' - b_u'); end
+    if(i == 1) r_n_0 = norm(a_u * u_n' - b_u'); end
     if(k == 1) r_1_0 = r_n_0; end
 
     %--------------------------
     % Solve momentum equations
     %--------------------------
 
-    % Store the previous iteration (suffix "p" for previous)
-    u_c_p = u_c;
-
     % Units for velocity are: kg m/s^2 * s/kg = m/s
-    u_c = pcg(a_u, b_u', tol_u, u_iters, [], [], u_c')';  % size = [1, n_c]
+    u_n = pcg(a_u, b_u', tol_u, u_iters, [], [], u_n')';  % size = [1, n_c]
 
     if(exist('fig_u', 'var') == 1 && mod(i, iter_plot_int) == 0)
-      plot_var(fig_u, 1, x_c, u_c, 'Cell Velocity Before Correction', i);
+      plot_var(fig_u, 1, x_c, u_n, 'Cell Velocity Before Correction', i);
     end
 
     %--------------------------
@@ -292,30 +290,32 @@ for k = 1:n_steps
     % Perform interpolation at a cell face
     switch(algor)
       case 'Rhie-Chow'
-        [u_if, u_af] = rhie_chow(                            ...
-                       x_c, dv, m_u,                         ...
-                       u_c, p_c, p_x);
+        [v_flux_if_n, v_flux_af_n] = rhie_chow(x_c, sx_if, dv, ...
+                                               m_u,            ...
+                                               u_n,            ...
+                                               p_c, p_x);
       case 'Rhie-Chow_Choi'
-        [u_if, u_af] = rhie_chow_choi(                       ...
-                       x_c, dv, urf_u, m_u, t_u,             ...
-                       u_c, u_c_o,                           ...
-                       u_if_o,                               ...
-                       p_c, p_x);
+        [v_flux_if_n, v_flux_af_n] = rhie_chow_choi(x_c, sx_if, dv,  ...
+                                                    m_u, t_u,        ...
+                                                    u_n, u_o,        ...
+                                                    v_flux_o,        ...
+                                                    p_c, p_x);
       case 'Rhie-Chow_Choi_Gu'
-        [u_if, u_af] = rhie_chow_choi_gu(                    ...
-                       x_c, dv, urf_u, m_u, t_u, f_c, f_if,  ...
-                       u_c, u_c_o,                           ...
-                       u_if_o,                               ...
-                       p_c, p_x);
+        [v_flux_if_n, v_flux_af_n] = rhie_chow_choi_gu(x_c, sx_if, dv,  ...
+                                                       m_u, t_u,        ...
+                                                       f_c, f_if,       ...
+                                                       u_n, u_o,        ...
+                                                       v_flux_o,        ...
+                                                       p_c, p_x);
       otherwise
         do_something_completely_different ();
     end
 
-    % Unit for b_p is: m/s * m^2 = m^3/s
-    b_p = -diff(u_af) .* dy .* dz;
+    % Unit for b_p is: m^3/s
+    b_p = -diff(v_flux_af_n);
 
     if(mod(i, iter_plot_int) == 0)
-      plot_var(fig_u, 2, x_if, u_if, 'Face Velocity Before Correction', i);
+      plot_var(fig_u, 2, x_if, v_flux_if_n, 'Face Flux Before Correction', i);
     end
 
     %-------------------------------
@@ -352,10 +352,10 @@ for k = 1:n_steps
     %-------------------------
     % Correct cell velocities
     %-------------------------
-    u_c = u_c - pp_x .* dv ./ spdiags(m_u, 0)';
+    u_n = u_n - pp_x .* dv ./ spdiags(m_u, 0)';
 
     if(mod(i, iter_plot_int) == 0)
-      plot_var(fig_u, 3, x_c, u_c, 'Cell Velocity After Correction', i);
+      plot_var(fig_u, 3, x_c, u_n, 'Cell Velocity After Correction', i);
     end
 
     %-------------------------
@@ -363,17 +363,16 @@ for k = 1:n_steps
     %-------------------------
     % Units for velocity: kg/(m s^2) * ms / m^2 * m^3 / kg = m/s
     for c=1:n_c-1
-      a_f = 0.5 * (dy(c)*dz(c) + dy(c+1)*dz(c+1));
-      u_if(c) = u_if(c) + (pp_c(c+1) - pp_c(c)) * a_p(c,c+1) / (a_f);
+      v_flux_if_n(c) = v_flux_if_n(c) + (pp_c(c+1) - pp_c(c)) * a_p(c,c+1);
     end
 
     if(mod(i, iter_plot_int) == 0)
-      plot_var(fig_u, 4, x_if, u_if, 'Face Velocity After Correction', i);
+      plot_var(fig_u, 4, x_if, v_flux_if_n, 'Face Flux After Correction', i);
     end
 
     % Work out residuals in the current iteration
     % (I use the same name as Mencinger and Zun)
-    r_n_i = norm(a_u * u_c' - b_u')
+    r_n_i = norm(a_u * u_n' - b_u')
 
     res_dt = r_n_i / r_n_0;
     printf('Residual reduction: %E\n', res_dt);
@@ -388,10 +387,10 @@ for k = 1:n_steps
 
   % Plot transient solutions
   if(mod(k, step_plot_int) == 0)
-    plot_var(fig_a, 1, x_c,  u_c,  'Cell Velocity',       k/step_plot_int);
-    plot_var(fig_a, 2, x_if, u_if, 'Face Velocity',       k/step_plot_int);
-    plot_var(fig_a, 3, x_c,  pp_c, 'Pressure Correction', k/step_plot_int);
-    plot_var(fig_a, 4, x_c,  p_c,  'Pressure',            k/step_plot_int);
+    plot_var(fig_a, 1, x_c,  u_n,         'Cell Velocity',       k/step_plot_int);
+    plot_var(fig_a, 2, x_if, v_flux_if_n, 'Face Flux',           k/step_plot_int);
+    plot_var(fig_a, 3, x_c,  pp_c,        'Pressure Correction', k/step_plot_int);
+    plot_var(fig_a, 4, x_c,  p_c,         'Pressure',            k/step_plot_int);
   end
 
   % Check if steady state has been reached
@@ -412,10 +411,10 @@ end
 % Plot final solution
 fig_f = figure('Name', ['Final Solution With ', strrep(algor, '_', ' '), ...
                         ' and dt=', mat2str(dt)]);
-plot_var(fig_f, 1, x_c,  u_c,  'Cell Velocity',       1);
-plot_var(fig_f, 2, x_if, u_if, 'Face Velocity',       1);
-plot_var(fig_f, 3, x_c,  pp_c, 'Pressure Correction', 1);
-plot_var(fig_f, 4, x_c,  p_c,  'Pressure',            1);
+plot_var(fig_f, 1, x_c,  u_n,         'Cell Velocity',       1);
+plot_var(fig_f, 2, x_if, v_flux_if_n, 'Face Flux',           1);
+plot_var(fig_f, 3, x_c,  pp_c,        'Pressure Correction', 1);
+plot_var(fig_f, 4, x_c,  p_c,         'Pressure',            1);
 
 % Plot residual history
 figure('Name', 'Residual History');
