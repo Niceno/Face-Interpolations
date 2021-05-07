@@ -4,7 +4,7 @@
 # ( 3) step_plot_int, unsteady results plotting interval (0 to skip)
 # ( 4) eps_st,        steady state tolerance
     1.0e-1
-   50
+   10
     1
     1.0e-9 
 #--------[ simple algorithm related ]--------

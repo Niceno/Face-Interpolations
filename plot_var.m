@@ -1,7 +1,7 @@
 %===============================================================================
 % Conveniently plots a avariable from a simulation
 %-------------------------------------------------------------------------------
-function b = plot_var(fig, sub, x, p, name, iter)
+function b = plot_var(fig, sub, x, var, name, iter)
 
   % Switch to a desired figure ...
   figure(fig);
@@ -10,7 +10,7 @@ function b = plot_var(fig, sub, x, p, name, iter)
   subplot(2,2, sub);
 
   % Plot what you want ...
-  plot(x, p, '-o');
+  plot(x, var, '-o');
 
   % ... and give it a title
   title(name);

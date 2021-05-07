@@ -52,7 +52,8 @@
 %-------------------------------------------------------------------------------
 clear
 
-g = 10.0;  % gravitational constant
+g        = 10.0;  % gravitational constant
+mass_src =  0.0;  % mass source [kg/s]
 
 u_west = 0.0;
 u_east = 0.0;
@@ -87,9 +88,9 @@ fclose(fid);
 %---------------------
 dat = load('-ascii', 'physical.dat')
 rho_water = dat(1);
-rho_air   = dat(2);
-mu_water  = dat(3);
-mu_air    = dat(4);
+rho_steam  = dat(2);
+mu_water   = dat(3);
+mu_steam   = dat(4);
 
 %-----------------------------------------------------
 % Read initial vof, it will also give number of cells
@@ -118,8 +119,8 @@ sx_if = line_avg(dy .* dz);         % size = [1, n_c-1]
 % Set some "initial" values in the cell centers ("_c").
 % For density, this will be used for inertial term ("_i")
 % (See the next comment)
-rho_c_i = vof_c * rho_air + (1-vof_c) * rho_water;  % density at cells
-mu_c    = vof_c * mu_air  + (1-vof_c) * mu_water;   % visosity at cells
+rho_c_i = vof_c * rho_steam + (1-vof_c) * rho_water;  % density at cells
+mu_c    = vof_c * mu_steam  + (1-vof_c) * mu_water;   % visosity at cells
 
 % Work out the values in the faces.  Here you can use linear or harmonic mean
 % You could have, in fact, started from prescribing physical properties from
@@ -314,6 +315,16 @@ for k = 1:n_steps
     % Unit for b_p is: m^3/s
     b_p = -diff(v_flux_af_n);
 
+    % Add volumetric source (boiling)
+    vol_src_steam =  mass_src / rho_steam;  % volume of steam created
+    vol_src_water = -mass_src / rho_water;  % volume of water lost
+    b_p(10) = b_p(10) + vol_src_water;
+    b_p(11) = b_p(11) + vol_src_steam;
+    b_p(20) = b_p(20) - (vol_src_steam + vol_src_water);
+
+    % Mimic convective outflow
+    u_east = mass_src / sx_if(n_c-1)
+
     if(mod(iter, iter_plot_int) == 0)
       plot_var(fig_u, 2, x_if, v_flux_if_n, 'Face Flux Before Correction',  ...
                                             iter / iter_plot_int);
@@ -415,6 +426,14 @@ for k = 1:n_steps
 
 end
 
+% Plot cells in all graphs for transient solution
+if(step_plot_int > 0)
+  plot_cells(fig_a, 1, x_n,  u_n,         vof_c);
+  plot_cells(fig_a, 2, x_n,  v_flux_if_n, vof_c);
+  plot_cells(fig_a, 3, x_n,  pp_c,        vof_c);
+  plot_cells(fig_a, 4, x_n,  p_c,         vof_c);
+end
+
 % Plot final solution
 fig_f = figure('Name', ['Final Solution With ', strrep(algor, '_', ' '), ...
                         ' and dt=', mat2str(dt)]);
@@ -422,6 +441,10 @@ plot_var(fig_f, 1, x_c,  u_n,         'Cell Velocity',       1);
 plot_var(fig_f, 2, x_if, v_flux_if_n, 'Face Flux',           1);
 plot_var(fig_f, 3, x_c,  pp_c,        'Pressure Correction', 1);
 plot_var(fig_f, 4, x_c,  p_c,         'Pressure',            1);
+plot_cells(fig_f, 1, x_n,  u_n,         vof_c);
+plot_cells(fig_f, 2, x_n,  v_flux_if_n, vof_c);
+plot_cells(fig_f, 3, x_n,  pp_c,        vof_c);
+plot_cells(fig_f, 4, x_n,  p_c,         vof_c);
 
 % Plot residual history
 figure('Name', 'Residual History');
@@ -443,6 +466,6 @@ if(step_plot_int > 0)
       step_leg = [step_leg; sprintf('step %d', c)];
     end
   end
-  figure(fig_a);  subplot(2,2,1);  legend(step_leg);
+  figure(fig_a);  subplot(2,2,2);  legend(step_leg);
 end
 
