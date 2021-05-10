@@ -52,8 +52,9 @@
 %-------------------------------------------------------------------------------
 clear
 
-g        = 10.0;  % gravitational constant
-mass_src =  0.0;  % mass source [kg/s]
+g        =  0.0;  % gravitational constant  [m/s^2]
+mass_src =  3.0;  % mass source             [kg/s]
+kappa    =  0.0;  % curvature               [1/m]
 
 u_west = 0.0;
 u_east = 0.0;
@@ -91,6 +92,7 @@ rho_water = dat(1);
 rho_steam  = dat(2);
 mu_water   = dat(3);
 mu_steam   = dat(4);
+sigma      = dat(5);
 
 %-----------------------------------------------------
 % Read initial vof, it will also give number of cells
@@ -119,42 +121,17 @@ sx_if = line_avg(dy .* dz);         % size = [1, n_c-1]
 % Set some "initial" values in the cell centers ("_c").
 % For density, this will be used for inertial term ("_i")
 % (See the next comment)
-rho_c_i = vof_c * rho_steam + (1-vof_c) * rho_water;  % density at cells
-mu_c    = vof_c * mu_steam  + (1-vof_c) * mu_water;   % visosity at cells
+rho_c_i = vof_c * rho_water + (1-vof_c) * rho_steam;  % density at cells
+mu_c    = vof_c * mu_water  + (1-vof_c) * mu_steam;   % visosity at cells
 
 % Work out the values in the faces.  Here you can use linear or harmonic mean
 % You could have, in fact, started from prescribing physical properties from
 % faces, which would make sense only if you initially prescribed vof in faces.
 % (I am not sure, maybe it is something worth considering, could be.)
 rho_if = harm_avg(rho_c_i);                  % density at inner faces
-rho_af = [rho_if(1),rho_if,rho_if(n_c-1)];   % append boundary values
 
 mu_if  = harm_avg(mu_c);                     % viscosity at inner faces
 mu_af  = [mu_if(1),mu_if,mu_if(n_c-1)];      % append boundary values
-
-%-------------------------------------------------------------------------------
-%
-%   This line is absolutelly crucial.  It works out density at cells (because
-%   they will determing also the forces in cells) from facial values.  This
-%   interpolation must be linear - I think because of the linear assumptions
-%   made in the finite volume method.
-%
-%   The suffix "_f" means this density is used to compute facial forces
-%
-%-------------------------------------------------------------------------------
-rho_c_f  = line_avg(rho_af);                 % recompute from face values
-
-% Work out vof at faces 
-% (If this is linear averaging, and rho_f is harmonic, 
-% then the rho_f is disconnected from the vof at faces?)
-vof_f = line_avg(vof_c);
-
-% Work out the exact pressure solution
-% (Interesting, but leave out for now)
-% p_c(1:n_c) = 0;  % initialize pressure everywhere
-% for c = 1:n_c-1
-%   p_c(c+1) = p_c(c) + g * (x_c(c+1)-x_c(c)) * rho_f(c);
-% end
 
 %----------------
 % Initial values
@@ -194,11 +171,11 @@ end
 % Initialize array for residuals in time step
 o_res = [];
 
-for k = 1:n_steps
+for step = 1:n_steps
 
   printf('#======================\n');
   printf('#                      \n');
-  printf('# Time Step: %d        \n', k);
+  printf('# Time Step: %d        \n', step);
   printf('#                      \n');
   printf('#======================\n');
 
@@ -253,13 +230,32 @@ for k = 1:n_steps
     % Unit for presure term: kg/(m^2 s^2) m^3 = kg m/s^2
     b_u = b_u - p_x .* dv;
 
-    %------------------------------------------------------
-    % Cell centered buoyancy terms (that's wrong they say)
-    %------------------------------------------------------
+    %-------------------------------------
+    % Face-centered surface tension terms
+    %-------------------------------------
+    f_if = -sigma * kappa * diff(vof_c) ./ diff(x_c);  % N/m * 1/m * 1/m = N/m^3
+
+    %------------------------------
+    % Face centered buoyancy terms
+    %------------------------------
     % Unit for b_u is: m/s^2 * kg/m^3 * m^3 = kg m/s^2 = N
-    f_if = g * rho_if;   % kg/m^3 * m/s^2 = kg/(m^2 s^2) = N/m^3
-    f_c  = g * rho_c_f;  % kg/m^3 * m/s^2 = kg/(m^2 s^2) = N/m^3
-    b_u  = b_u + f_c .* dv;
+    f_if = f_if + g * rho_if;   % kg/m^3 * m/s^2 = kg/(m^2 s^2) = N/m^3
+
+    % Expand forces to boundary faces too
+    f_af = [f_if(1), f_if, f_if(n_c-1)];               % N/m^3
+
+    %-----------------------------------------------------------------------
+    %
+    %   This line is absolutelly crucial.  It works out density at cells
+    %   (because they will determing also the forces in cells) from facial
+    %   values.  This interpolation must be linear - I think because of
+    %   the linear assumptions made in the finite volume method.
+    %
+    %   The suffix "_f" means this density is used to compute facial forces
+    %
+    %-----------------------------------------------------------------------
+    f_c = line_avg(f_af);   % kg/m^3 * m/s^2 = kg/(m^2 s^2) = N/m^3
+    b_u = b_u + f_c .* dv;
 
     % Under-relax forces in momentum equations
     % (a_u is already divided by urf_u above)
@@ -270,7 +266,7 @@ for k = 1:n_steps
     % Store initial residual for this time step
     % (I use the same name as Mencinger and Zun)
     if(iter == 1) r_n_0 = norm(a_u * u_n' - b_u'); end
-    if(k == 1) r_1_0 = r_n_0; end
+    if(step == 1) r_1_0 = r_n_0; end
 
     %--------------------------
     % Solve momentum equations
@@ -404,11 +400,11 @@ for k = 1:n_steps
 
 
   % Plot transient solutions
-  if(mod(k, step_plot_int) == 0)
-    plot_var(fig_a, 1, x_c,  u_n,         'Cell Velocity',       k/step_plot_int);
-    plot_var(fig_a, 2, x_if, v_flux_if_n, 'Face Flux',           k/step_plot_int);
-    plot_var(fig_a, 3, x_c,  pp_c,        'Pressure Correction', k/step_plot_int);
-    plot_var(fig_a, 4, x_c,  p_c,         'Pressure',            k/step_plot_int);
+  if(mod(step, step_plot_int) == 0)
+    plot_var(fig_a, 1, x_c,  u_n,         'Cell Velocity',       step/step_plot_int);
+    plot_var(fig_a, 2, x_if, v_flux_if_n, 'Face Flux',           step/step_plot_int);
+    plot_var(fig_a, 3, x_c,  pp_c,        'Pressure Correction', step/step_plot_int);
+    plot_var(fig_a, 4, x_c,  p_c,         'Pressure',            step/step_plot_int);
   end
 
   % Check if steady state has been reached
@@ -418,7 +414,7 @@ for k = 1:n_steps
   if(res_st < eps_st)
     printf('#=====================================\n');
     printf('#                                     \n');
-    printf('# Steady State Reached In %d Steps \n', k);
+    printf('# Steady State Reached In %d Steps \n', step);
     printf('#                                     \n');
     printf('#=====================================\n');
     break;
@@ -461,7 +457,7 @@ end
 
 if(step_plot_int > 0)
   step_leg = [];
-  for c = 1:k
+  for c = 1:step
     if(mod(c, step_plot_int) == 0)
       step_leg = [step_leg; sprintf('step %d', c)];
     end
