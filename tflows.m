@@ -428,6 +428,30 @@ if(step_plot_int > 0)
   plot_cells(fig_a, 2, x_n,  v_flux_if_n, vof_c);
   plot_cells(fig_a, 3, x_n,  pp_c,        vof_c);
   plot_cells(fig_a, 4, x_n,  p_c,         vof_c);
+
+  step_leg = [];
+  for c = 1:step
+    if(mod(c, step_plot_int) == 0)
+      step_leg = [step_leg; sprintf('step %d', c)];
+    end
+  end
+  figure(fig_a);  subplot(2,2,2);  legend(step_leg);
+end
+
+% Place legends to plots for iterations
+if(mod(iter, iter_plot_int) == 0)
+  plot_cells(fig_u, 1, x_c,  u_n,         vof_c);
+  plot_cells(fig_u, 3, x_c,  u_n,         vof_c);
+  plot_cells(fig_u, 2, x_if, v_flux_if_n, vof_c);
+  plot_cells(fig_u, 4, x_if, v_flux_if_n, vof_c);
+
+  plot_cells(fig_p, 1, x_c, pp_c, vof_c);
+  plot_cells(fig_p, 2, x_c, p_c,  vof_c);
+  plot_cells(fig_p, 3, x_c, pp_x, vof_c);
+  plot_cells(fig_p, 4, x_c, p_x,  vof_c);
+
+  figure(fig_u);  legend(iter_leg);
+  figure(fig_p);  legend(iter_leg);
 end
 
 % Plot final solution
@@ -448,20 +472,4 @@ x=[]; for c=1:size(o_res,2) x=[x, c]; end
 semilogy(x, o_res, '-*');
 title(['Convergence History With ', strrep(algor, '_', ' '), ...
        ' and dt=', mat2str(dt)]);
-
-% Place legends to plots
-if(mod(iter, iter_plot_int) == 0)
-  figure(fig_u);  legend(iter_leg);
-  figure(fig_p);  legend(iter_leg);
-end
-
-if(step_plot_int > 0)
-  step_leg = [];
-  for c = 1:step
-    if(mod(c, step_plot_int) == 0)
-      step_leg = [step_leg; sprintf('step %d', c)];
-    end
-  end
-  figure(fig_a);  subplot(2,2,2);  legend(step_leg);
-end
 
