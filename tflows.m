@@ -52,8 +52,8 @@
 %-------------------------------------------------------------------------------
 clear
 
-g        =  0.0;  % gravitational constant  [m/s^2]
-mass_src =  3.0;  % mass source             [kg/s]
+g        = 10.0;  % gravitational constant  [m/s^2]
+mass_src =  0.0;  % mass source             [kg/s]
 kappa    =  0.0;  % curvature               [1/m]
 
 u_west = 0.0;
