@@ -6,7 +6,7 @@
 %  cells:       1       2       3       4       5       6       7       8
 %  faces:           1       2       3       4       5       6       7
 %-------------------------------------------------------------------------------
-function a_p = discretize_p(x_c, dy, dz, dv, a_u)
+function a_p = discretize_p(x_c, sx, dv, a_u)
 
   % Initialize sparse matrix
   a_p = diag(sparse(0));
@@ -23,7 +23,7 @@ function a_p = discretize_p(x_c, dy, dz, dv, a_u)
 
     % East side
     if(c < n_c)
-      d = 0.5 * (dy(c)*dz(c) + dy(c+1)*dz(c+1)) / (x_c(c+1) - x_c(c));
+      d = sx / (x_c(c+1) - x_c(c));
       a = 0.5 * d * (dv(c) / a_u(c,c) + dv(c+1) / a_u(c+1, c+1));
       a_p(c,c+1) = -a;
       a_p(c,c)   =  a_p(c,c) + a;
@@ -31,7 +31,7 @@ function a_p = discretize_p(x_c, dy, dz, dv, a_u)
 
     % West side
     if(c > 1)
-      d = 0.5 * (dy(c)*dz(c) + dy(c-1)*dz(c-1)) / (x_c(c) - x_c(c-1));
+      d = sx / (x_c(c) - x_c(c-1));
       a = 0.5 * d * (dv(c) / a_u(c,c) + dv(c-1) / a_u(c-1, c-1));
       a_p(c,c-1) = -a;
       a_p(c,c)   =  a_p(c,c) + a;

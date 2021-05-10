@@ -108,11 +108,11 @@ x_n  = l*(0:n_c)/n_c;  % node coordinates,       size = [1, n_c+1]
 x_c  = line_avg(x_n);  % cell coordinates,       size = [1, n_c]
 x_if = line_avg(x_c);  % inner face coordinates, size = [1, n_c-1]
 
-dx    = x_n(2:end) - x_n(1:end-1);  % size = [1, n_c]
-dy    = dx * 2000.0;                % size = [1, n_c]
-dz    = dx * 2000.0;                % size = [1, n_c]
-dv    = dx .* dy .* dz;             % size = [1, n_c]
-sx_if = line_avg(dy .* dz);         % size = [1, n_c-1]
+dx = x_n(2:end) - x_n(1:end-1);  % size = [1, n_c]
+dy = dx * 2000.0;                % size = [1, n_c]
+dz = dx * 2000.0;                % size = [1, n_c]
+dv = dx .* dy .* dz;             % size = [1, n_c]
+sx = dy(1) * dz(1)               % size = [1, n_c-1]
 
 %-------------------------------------------------------
 % Distribution of physical properties on numerical mesh
@@ -136,11 +136,11 @@ mu_af  = [mu_if(1),mu_if,mu_if(n_c-1)];      % append boundary values
 %----------------
 % Initial values
 %----------------
-u_n(1:n_c)  = 0.0;                     % for velocities
-v_flux_if_n = line_avg(u_n) .* sx_if;  % volume fluxes at inner faces [m^3/s]
-p_c(1:n_c)  = 0.0;                     % for pressure
-pp_c(1:n_c) = 0.0;                     % for pressure correction
-p_x = gradient_p(x_n, x_c, p_c);       % for pressure gradients
+u_n(1:n_c)  = 0.0;                 % for velocities
+v_flux_if_n = line_avg(u_n) * sx;  % volume fluxes at inner faces [m^3/s]
+p_c(1:n_c)  = 0.0;                 % for pressure
+pp_c(1:n_c) = 0.0;                 % for pressure correction
+p_x = gradient_p(x_n, x_c, p_c);   % for pressure gradients
 
 %---------------------------------------
 % Variables related to plotting results
@@ -199,8 +199,8 @@ for step = 1:n_steps
     %-------------------------------
     % Discretize momentum equations
     %-------------------------------
-    [a_u, t_u, b_u] = discretize_u(x_n, x_c, dx, dy, dz, dt,  ...
-                                   rho_c_i, mu_af,            ...
+    [a_u, t_u, b_u] = discretize_u(x_n, x_c, dx, sx, dt,  ...
+                                   rho_c_i, mu_af,        ...
                                    u_west, u_east);
 
     % Store original matrix like you would do in T-Flows
@@ -211,7 +211,7 @@ for step = 1:n_steps
     %  momentum system was under-relaxed
     %--------------------------------------
     % Units are: m^4 s / kg
-    a_p = discretize_p(x_c, dy, dz, dv, a_u);
+    a_p = discretize_p(x_c, sx, dv, a_u);
 
     % Under-relax the discretized momentum equations
     for c=1:n_c
@@ -287,22 +287,22 @@ for step = 1:n_steps
     % Perform interpolation at a cell face
     switch(algor)
       case 'Rhie-Chow'
-        [v_flux_if_n, v_flux_af_n] = rhie_chow(x_c, sx_if, dv, ...
-                                               m_u,            ...
-                                               u_n,            ...
+        [v_flux_if_n, v_flux_af_n] = rhie_chow(x_c, sx, dv, ...
+                                               m_u,         ...
+                                               u_n,         ...
                                                p_c, p_x);
       case 'Rhie-Chow_Choi'
-        [v_flux_if_n, v_flux_af_n] = rhie_chow_choi(x_c, sx_if, dv,  ...
-                                                    m_u, t_u,        ...
-                                                    u_n, u_o,        ...
-                                                    v_flux_o,        ...
+        [v_flux_if_n, v_flux_af_n] = rhie_chow_choi(x_c, sx, dv,  ...
+                                                    m_u, t_u,     ...
+                                                    u_n, u_o,     ...
+                                                    v_flux_o,     ...
                                                     p_c, p_x);
       case 'Rhie-Chow_Choi_Gu'
-        [v_flux_if_n, v_flux_af_n] = rhie_chow_choi_gu(x_c, sx_if, dv,  ...
-                                                       m_u, t_u,        ...
-                                                       f_c, f_if,       ...
-                                                       u_n, u_o,        ...
-                                                       v_flux_o,        ...
+        [v_flux_if_n, v_flux_af_n] = rhie_chow_choi_gu(x_c, sx, dv,  ...
+                                                       m_u, t_u,     ...
+                                                       f_c, f_if,    ...
+                                                       u_n, u_o,     ...
+                                                       v_flux_o,     ...
                                                        p_c, p_x);
       otherwise
         do_something_completely_different ();
@@ -319,7 +319,7 @@ for step = 1:n_steps
     b_p(20) = b_p(20) - (vol_src_steam + vol_src_water);
 
     % Mimic convective outflow
-    u_east = mass_src / sx_if(n_c-1)
+    u_east = mass_src / sx;
 
     if(mod(iter, iter_plot_int) == 0)
       plot_var(fig_u, 2, x_if, v_flux_if_n, 'Face Flux Before Correction',  ...
