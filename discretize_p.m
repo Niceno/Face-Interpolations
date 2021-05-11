@@ -6,7 +6,7 @@
 %  cells:       1       2       3       4       5       6       7       8
 %  faces:           1       2       3       4       5       6       7
 %-------------------------------------------------------------------------------
-function a_p = discretize_p(x_c, sx, dv, a_u)
+function a_p = discretize_p(x_c, sx, dv, w1, w2, a_u)
 
   % Initialize sparse matrix
   a_p = diag(sparse(0));
@@ -17,25 +17,19 @@ function a_p = discretize_p(x_c, sx, dv, a_u)
   %-------------------
   % Inside the domain
   %-------------------
-  for c = 1:n_c
+  for f = 1:n_c-1
+
+    c1 = f;
+    c2 = c1 + 1;
 
     % Units: m * m^3 * s/kg = m^4 s / kg
-
-    % East side
-    if(c < n_c)
-      d = sx / (x_c(c+1) - x_c(c));
-      a = 0.5 * d * (dv(c) / a_u(c,c) + dv(c+1) / a_u(c+1, c+1));
-      a_p(c,c+1) = -a;
-      a_p(c,c)   =  a_p(c,c) + a;
-    end
-
-    % West side
-    if(c > 1)
-      d = sx / (x_c(c) - x_c(c-1));
-      a = 0.5 * d * (dv(c) / a_u(c,c) + dv(c-1) / a_u(c-1, c-1));
-      a_p(c,c-1) = -a;
-      a_p(c,c)   =  a_p(c,c) + a;
-    endif
+    d = sx / (x_c(c2) - x_c(c1));
+    a = w1(f) * d * (dv(c1) / a_u(c1, c1)) ...
+      + w2(f) * d * (dv(c2) / a_u(c2, c2));
+    a_p(c1,c2) = -a;
+    a_p(c2,c1) = -a;
+    a_p(c1,c1) =  a_p(c1,c1) + a;
+    a_p(c2,c2) =  a_p(c2,c2) + a;
 
   end
 

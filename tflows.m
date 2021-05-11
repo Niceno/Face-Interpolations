@@ -52,9 +52,9 @@
 %-------------------------------------------------------------------------------
 clear
 
-g        = 10.0;  % gravitational constant  [m/s^2]
+g        =  0.0;  % gravitational constant  [m/s^2]
 mass_src =  0.0;  % mass source             [kg/s]
-kappa    =  0.0;  % curvature               [1/m]
+kappa    = 10.0;  % curvature               [1/m]
 
 u_west = 0.0;
 u_east = 0.0;
@@ -105,8 +105,29 @@ n_c = size(vof_c, 2);
 %-----------------
 l    =   0.1           % lenght of the domain
 x_n  = l*(0:n_c)/n_c;  % node coordinates,       size = [1, n_c+1]
-x_c  = line_avg(x_n);  % cell coordinates,       size = [1, n_c]
-x_if = line_avg(x_c);  % inner face coordinates, size = [1, n_c-1]
+
+% Stretch the grid
+d_x(1:n_c) = 1;
+stretch = 0.9;
+for i = 2:floor(n_c/2)
+  d_x(i) = d_x(i-1) * stretch;
+  d_x(n_c+1-i) = d_x(i);
+end
+d_x = d_x / sum(d_x) * l;
+for i = 1:n_c
+  x_n(i+1) = x_n(i) + d_x(i);
+end
+
+x_c           = line_avg(x_n);  % cell coordinates,       size = [1, n_c]
+x_if(1:n_c-1) = x_n(2:n_c);     % inner face coordinates, size = [1, n_c-1]
+
+% Face-weigths; size = [1, n_c-1]
+w1 = (x_c(2:n_c) - x_n(2:n_c)) ./ diff(x_c);
+w2 = 1.0 - w1;
+
+% test gradients: p_c = x_c;
+% test gradients: p_x = gradient_p(x_n, x_c, w1, w2, p_c);
+% test gradients: rtyuio
 
 dx = x_n(2:end) - x_n(1:end-1);  % size = [1, n_c]
 dy = dx * 2000.0;                % size = [1, n_c]
@@ -136,11 +157,11 @@ mu_af  = [mu_if(1),mu_if,mu_if(n_c-1)];      % append boundary values
 %----------------
 % Initial values
 %----------------
-u_n(1:n_c)  = 0.0;                 % for velocities
-v_flux_if_n = line_avg(u_n) * sx;  % volume fluxes at inner faces [m^3/s]
-p_c(1:n_c)  = 0.0;                 % for pressure
-pp_c(1:n_c) = 0.0;                 % for pressure correction
-p_x = gradient_p(x_n, x_c, p_c);   % for pressure gradients
+u_n(1:n_c)  = 0.0;                           % for velocities
+v_flux_if_n = weight_avg(u_n, w1, w2) * sx;  % vol. flux at inner faces [m^3/s]
+p_c(1:n_c)  = 0.0;                           % for pressure
+pp_c(1:n_c) = 0.0;                           % for pressure correction
+p_x = gradient_p(x_n, x_c, w1, w2, p_c);     % for pressure gradients
 
 %---------------------------------------
 % Variables related to plotting results
@@ -151,11 +172,6 @@ iter_leg = [];
 if(iter_plot_int > 0)
   fig_u = figure('Name', 'Velocity Iterations');
   fig_p = figure('Name', 'Pressure Iterations');
-  for c = 1:n_iters
-    if(mod(c, iter_plot_int) == 0)
-      iter_leg = [iter_leg; sprintf('iter %d', c)];
-    end
-  end
 end
 if(step_plot_int > 0)
   fig_a = figure('Name', ['Transients With ', strrep(algor, '_', ' '),  ...;
@@ -211,7 +227,7 @@ for step = 1:n_steps
     %  momentum system was under-relaxed
     %--------------------------------------
     % Units are: m^4 s / kg
-    a_p = discretize_p(x_c, sx, dv, a_u);
+    a_p = discretize_p(x_c, sx, dv, w1, w2, a_u);
 
     % Under-relax the discretized momentum equations
     for c=1:n_c
@@ -275,7 +291,8 @@ for step = 1:n_steps
     % Units for velocity are: kg m/s^2 * s/kg = m/s
     u_n = pcg(a_u, b_u', tol_u, u_iters, [], [], u_n')';  % size = [1, n_c]
 
-    if(exist('fig_u', 'var') == 1 && mod(iter, iter_plot_int) == 0)
+    if(mod(iter, iter_plot_int) == 0)
+      iter_leg = [iter_leg; sprintf('iter %d', iter)];
       plot_var(fig_u, 1, x_c, u_n, 'Cell Velocity Before Correction',  ...
                                    iter / iter_plot_int);
     end
@@ -288,17 +305,20 @@ for step = 1:n_steps
     switch(algor)
       case 'Rhie-Chow'
         [v_flux_if_n, v_flux_af_n] = rhie_chow(x_c, sx, dv, ...
+                                               w1, w2,      ...
                                                m_u,         ...
                                                u_n,         ...
                                                p_c, p_x);
       case 'Rhie-Chow_Choi'
         [v_flux_if_n, v_flux_af_n] = rhie_chow_choi(x_c, sx, dv,  ...
+                                                    w1, w2,       ...
                                                     m_u, t_u,     ...
                                                     u_n, u_o,     ...
                                                     v_flux_o,     ...
                                                     p_c, p_x);
       case 'Rhie-Chow_Choi_Gu'
         [v_flux_if_n, v_flux_af_n] = rhie_chow_choi_gu(x_c, sx, dv,  ...
+                                                       w1, w2,       ...
                                                        m_u, t_u,     ...
                                                        f_c, f_if,    ...
                                                        u_n, u_o,     ...
@@ -351,8 +371,8 @@ for step = 1:n_steps
     %------------------------------------------------------
     % Calculate pressure and pressure correction gradients
     %------------------------------------------------------
-    p_x  = gradient_p(x_n, x_c, p_c);
-    pp_x = gradient_p(x_n, x_c, pp_c);
+    p_x  = gradient_p(x_n, x_c, w1, w2, p_c);
+    pp_x = gradient_p(x_n, x_c, w1, w2, pp_c);
 
     if(mod(iter, iter_plot_int) == 0)
       plot_var(fig_p, 3, x_c, p_x,  'Pressure Gradient',  ...
@@ -439,16 +459,16 @@ if(step_plot_int > 0)
 end
 
 % Place legends to plots for iterations
-if(mod(iter, iter_plot_int) == 0)
-  plot_cells(fig_u, 1, x_c,  u_n,         vof_c);
-  plot_cells(fig_u, 3, x_c,  u_n,         vof_c);
-  plot_cells(fig_u, 2, x_if, v_flux_if_n, vof_c);
-  plot_cells(fig_u, 4, x_if, v_flux_if_n, vof_c);
+if(iter_plot_int > 0)
+  plot_cells(fig_u, 1, x_n, u_n,         vof_c);
+  plot_cells(fig_u, 3, x_n, u_n,         vof_c);
+  plot_cells(fig_u, 2, x_n, v_flux_if_n, vof_c);
+  plot_cells(fig_u, 4, x_n, v_flux_if_n, vof_c);
 
-  plot_cells(fig_p, 1, x_c, pp_c, vof_c);
-  plot_cells(fig_p, 2, x_c, p_c,  vof_c);
-  plot_cells(fig_p, 3, x_c, pp_x, vof_c);
-  plot_cells(fig_p, 4, x_c, p_x,  vof_c);
+  plot_cells(fig_p, 1, x_n, pp_c, vof_c);
+  plot_cells(fig_p, 2, x_n, p_c,  vof_c);
+  plot_cells(fig_p, 3, x_n, pp_x, vof_c);
+  plot_cells(fig_p, 4, x_n, p_x,  vof_c);
 
   figure(fig_u);  legend(iter_leg);
   figure(fig_p);  legend(iter_leg);
