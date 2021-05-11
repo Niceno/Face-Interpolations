@@ -487,9 +487,10 @@ plot_cells(fig_f, 3, x_n,  pp_c,        vof_c);
 plot_cells(fig_f, 4, x_n,  p_c,         vof_c);
 
 % Plot residual history
-figure('Name', 'Residual History');
-x=[]; for c=1:size(o_res,2) x=[x, c]; end
-semilogy(x, o_res, '-*');
-title(['Convergence History With ', strrep(algor, '_', ' '), ...
-       ' and dt=', mat2str(dt)]);
-
+if(n_steps > 1)
+  figure('Name', 'Residual History');
+  x=[]; for c=1:size(o_res,2) x=[x, c]; end
+  semilogy(x, o_res, '-*');
+  title(['Convergence History With ', strrep(algor, '_', ' '), ...
+         ' and dt=', mat2str(dt)]);
+end
