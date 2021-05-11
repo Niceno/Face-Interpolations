@@ -157,11 +157,11 @@ mu_af  = [mu_if(1),mu_if,mu_if(n_c-1)];      % append boundary values
 %----------------
 % Initial values
 %----------------
-u_n(1:n_c)  = 0.0;                           % for velocities
-v_flux_if_n = weight_avg(u_n, w1, w2) * sx;  % vol. flux at inner faces [m^3/s]
-p_c(1:n_c)  = 0.0;                           % for pressure
-pp_c(1:n_c) = 0.0;                           % for pressure correction
-p_x = gradient_p(x_n, x_c, w1, w2, p_c);     % for pressure gradients
+u_n(1:n_c)  = 0.0;                         % for velocities
+v_flux_if_n = line_avg(u_n, w1, w2) * sx;  % vol. flux at inner faces [m^3/s]
+p_c(1:n_c)  = 0.0;                         % for pressure
+pp_c(1:n_c) = 0.0;                         % for pressure correction
+p_x = gradient_p(x_n, x_c, w1, w2, p_c);   % for pressure gradients
 
 %---------------------------------------
 % Variables related to plotting results

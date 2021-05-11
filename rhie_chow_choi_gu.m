@@ -38,7 +38,7 @@ function [v_flux_if_n, v_flux_af_n] = rhie_chow_choi_gu(x_c, sx, dv,  ...
   u_c = u_c - v_m .* f_c;
 
   % Interpolate velocity
-  u_f = weight_avg(u_c, w1, w2);
+  u_f = line_avg(u_c, w1, w2);
 
   % Mimics bare-bone matrix from T-Flows
   % Unit: m
@@ -46,11 +46,11 @@ function [v_flux_if_n, v_flux_af_n] = rhie_chow_choi_gu(x_c, sx, dv,  ...
 
   % Mimics pressure matrix from T-Flows
   % Unit: m^ 4 s / kg
-  a12 = weight_avg(v_m, w1, w2) .* a_fc;
+  a12 = line_avg(v_m, w1, w2) .* a_fc;
 
   % Unit: 
   % m^3 s / kg * kg /(m^2 s^2) * m = m^2/s
-  px_f = weight_avg(v_m .* p_x, w1, w2) .* diff(x_c);
+  px_f = line_avg(v_m .* p_x, w1, w2) .* diff(x_c);
 
   %--------------------------
   % Rhie and Chow correction
@@ -62,12 +62,12 @@ function [v_flux_if_n, v_flux_af_n] = rhie_chow_choi_gu(x_c, sx, dv,  ...
   %--------------------------
   % Choi's correction part 2
   %--------------------------
-  v_flux_if_n = v_flux_if_n + weight_avg(t_m, w1, w2) .* v_flux_o;
+  v_flux_if_n = v_flux_if_n + line_avg(t_m, w1, w2) .* v_flux_o;
 
   %------------------------
   % Gu's correction part 2
   %------------------------
-  v_flux_if_n = v_flux_if_n + weight_avg(v_m, w1, w2) .* f_if .* sx;
+  v_flux_if_n = v_flux_if_n + line_avg(v_m, w1, w2) .* f_if .* sx;
 
   % Append boundary values (just zeroes now)
   v_flux_af_n = [0.0,v_flux_if_n,0.0];

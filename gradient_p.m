@@ -21,7 +21,7 @@ function g_p = gradient_p(x_n, x_c, w1, w2, p_c)
   % Expand pressure to include boundary cells
 
   % Pressure at inner faces
-  p_if = weight_avg(p_c, w1, w2);  % size = [1, n_c-1]
+  p_if = line_avg(p_c, w1, w2);  % size = [1, n_c-1]
 
   % Pressure at all faces (including boundary ones)
   p_af = [p_c(1), p_if, p_c(n_c)];  % size = [1, n_c+1]
