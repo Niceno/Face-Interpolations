@@ -52,9 +52,10 @@
 %-------------------------------------------------------------------------------
 clear
 
-g        =  0.0;  % gravitational constant  [m/s^2]
-mass_src =  0.0;  % mass source             [kg/s]
-kappa    = 10.0;  % curvature               [1/m]
+g        =  0.0;     % gravitational constant  [m/s^2]
+mass_src =  3.0;     % mass source             [kg/s]
+kappa    =  0.0;     % curvature               [1/m]
+d_vof    =  0.0333;  % for moving interface
 
 u_west = 0.0;
 u_east = 0.0;
@@ -177,6 +178,19 @@ for step = 1:n_steps
   printf('#                      \n');
   printf('#======================\n');
 
+   %-------------
+   % Advance VOF
+   %-------------
+   for f = 1:n_c-1
+     c1 = f;
+     c2 = c1+1;
+     if(vof_c(c1) <= 0.5  && vof_c(c2) > 0)
+       vof_c(c2) = vof_c(c2) - d_vof;
+       vof_c(c2) = max(0, vof_c(c2));
+       break;
+     end
+   end
+
   %------------------------------------------------------------------------
   % Distribution of physical properties on numerical mesh depending on vof
   %------------------------------------------------------------------------
@@ -261,16 +275,24 @@ for step = 1:n_steps
     f_if = f_if + g * rho_if;   % kg/m^3 * m/s^2 = kg/(m^2 s^2) = N/m^3
 
     % Face force due to mass transfer
-    % kg^2/s^2 * m^3/kg / m^2 = kg m / s^2 = N
+    % kg^2/s^2 * m^3/kg / m^2 / m^3 = kg / (m^2 s^2) = N / m^3
     % These lead to nothing, they were way
     % too small compared to pressure forces
     f_mt_if(1:n_c-1) = 0.0;
-    f_mt_if(10) = +mass_src^2 * (1/rho_water+1/rho_steam) / sx;
+    for f = 1:n_c-1
+      c1 = f;
+      c2 = c1+1;
+      if(vof_c(c1) <= 0.5  && vof_c(c2) > 0.5)
+        f_mt_if(f) = mass_src^2 * (1/rho_water+1/rho_steam) ...
+                   / sx / (0.5*(dv(c1)+dv(c2)));
+      end
+    end
     f_mt_af = [f_mt_if(1), f_mt_if, f_mt_if(n_c-1)];   % N
     f_mt_c = line_avg(f_mt_af);
 
     % Expand forces to boundary faces too
     f_af = [f_if(1), f_if, f_if(n_c-1)];               % N/m^3
+    % made no difference :-( f_af = f_af + f_mt_af;
 
     %-----------------------------------------------------------------------
     %
@@ -283,7 +305,7 @@ for step = 1:n_steps
     %
     %-----------------------------------------------------------------------
     f_c = line_avg(f_af);   % kg/m^3 * m/s^2 = kg/(m^2 s^2) = N/m^3
-    b_u = b_u + f_c .* dv;  % made litte difference: + line_avg(f_mt_af);  % N
+    b_u = b_u + f_c .* dv;
 
     % Under-relax forces in momentum equations
     % (a_u is already divided by urf_u above)
