@@ -347,7 +347,7 @@ for step = 1:n_steps
     for f = 1:n_c-1
       c1 = f;
       c2 = c1+1;
-      if(vof_if(f) > 0.001 && vof_if(f) < 0.999)
+      if(vof_c(c1) <= 0.5  && vof_c(c2) > 0.5)
         vol_src_steam =  mass_src / rho_steam;  % volume of steam created
         vol_src_water = -mass_src / rho_water;  % volume of water lost
         b_p(c1)  = b_p(c1) + vol_src_water;
