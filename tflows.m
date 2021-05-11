@@ -210,6 +210,12 @@ for step = 1:n_steps
   mu_if  = harm_avg(mu_c);                     % viscosity at inner faces
   mu_af  = [mu_if(1),mu_if,mu_if(n_c-1)];      % append boundary values
 
+  % Density-biased height coefficients
+  % (The application so far wasn't successful.  It helps to smooth out
+  %  velocities for Stefan's case, but ruins all the others.)
+  h1 = 0.5 * rho_if ./ rho_c(1:n_c-1);
+  h2 = 0.5 * rho_if ./ rho_c(2:n_c);
+
   %----------------------------------------------
   % Store the last time step as old (suffix "o")
   %----------------------------------------------
