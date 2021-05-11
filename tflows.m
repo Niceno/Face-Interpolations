@@ -53,8 +53,8 @@
 clear
 
 g        =  0.0;  % gravitational constant  [m/s^2]
-mass_src =  3.0;  % mass source             [kg/s]
-kappa    =  0.0;  % curvature               [1/m]
+mass_src =  0.0;  % mass source             [kg/s]
+kappa    = 10.0;  % curvature               [1/m]
 
 u_west = 0.0;
 u_east = 0.0;
@@ -136,27 +136,6 @@ dz = dx * 2000.0;                % size = [1, n_c]
 dv = dx .* dy .* dz;             % size = [1, n_c]
 sx = dy(1) * dz(1)               % size = [1, n_c-1]
 
-vof_if = line_avg(vof_c, w1, w2);
-
-%-------------------------------------------------------
-% Distribution of physical properties on numerical mesh
-%-------------------------------------------------------
-
-% Set some "initial" values in the cell centers ("_c").
-% For density, this will be used for inertial term ("_i")
-% (See the next comment)
-rho_c_i = vof_c * rho_water + (1-vof_c) * rho_steam;  % density at cells
-mu_c    = vof_c * mu_water  + (1-vof_c) * mu_steam;   % visosity at cells
-
-% Work out the values in the faces.  Here you can use linear or harmonic mean
-% You could have, in fact, started from prescribing physical properties from
-% faces, which would make sense only if you initially prescribed vof in faces.
-% (I am not sure, maybe it is something worth considering, could be.)
-rho_if = harm_avg(rho_c_i);                  % density at inner faces
-
-mu_if  = harm_avg(mu_c);                     % viscosity at inner faces
-mu_af  = [mu_if(1),mu_if,mu_if(n_c-1)];      % append boundary values
-
 %----------------
 % Initial values
 %----------------
@@ -198,7 +177,28 @@ for step = 1:n_steps
   printf('#                      \n');
   printf('#======================\n');
 
+  %------------------------------------------------------------------------
+  % Distribution of physical properties on numerical mesh depending on vof
+  %------------------------------------------------------------------------
+
+  % Set some initial values in the cell centers ("_c").
+  % For density, this will be used for inertial term.
+  % (See the next comment)
+  rho_c = vof_c * rho_water + (1-vof_c) * rho_steam;  % density at cells
+  mu_c  = vof_c * mu_water  + (1-vof_c) * mu_steam;   % visosity at cells
+
+  % Work out the values in the faces.  Here you can use linear or harmonic mean
+  % You could have, in fact, started from prescribing physical properties from
+  % faces, which would make sense only if you initially prescribed vof in faces.
+  % (I am not sure, maybe it is something worth considering, could be.)
+  rho_if = harm_avg(rho_c);                    % density at inner faces
+
+  mu_if  = harm_avg(mu_c);                     % viscosity at inner faces
+  mu_af  = [mu_if(1),mu_if,mu_if(n_c-1)];      % append boundary values
+
+  %----------------------------------------------
   % Store the last time step as old (suffix "o")
+  %----------------------------------------------
   u_o  = u_n;
   v_flux_o = v_flux_if_n;
 
@@ -219,7 +219,7 @@ for step = 1:n_steps
     % Discretize momentum equations
     %-------------------------------
     [a_u, t_u, b_u] = discretize_u(x_n, x_c, dx, sx, dt,  ...
-                                   rho_c_i, mu_af,        ...
+                                   rho_c, mu_af,          ...
                                    u_west, u_east);
 
     % Store original matrix like you would do in T-Flows
@@ -241,7 +241,7 @@ for step = 1:n_steps
     % Add unsteady term to the right hand side
     %------------------------------------------
     % Unit for unstead term: kg/(m^3) * m^3 * m / s / s = kg m/s^2
-    b_u = b_u + rho_c_i .* dv .* u_o / dt;
+    b_u = b_u + rho_c .* dv .* u_o / dt;
 
     %------------------------------------------
     % Add pressure terms to momentum equations
