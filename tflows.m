@@ -53,8 +53,8 @@
 clear
 
 g        =  0.0;  % gravitational constant  [m/s^2]
-mass_src =  0.0;  % mass source             [kg/s]
-kappa    = 10.0;  % curvature               [1/m]
+mass_src =  3.0;  % mass source             [kg/s]
+kappa    =  0.0;  % curvature               [1/m]
 
 u_west = 0.0;
 u_east = 0.0;
@@ -108,7 +108,7 @@ x_n  = l*(0:n_c)/n_c;  % node coordinates,       size = [1, n_c+1]
 
 % Stretch the grid
 d_x(1:n_c) = 1;
-stretch = 0.9;
+stretch = 1.0;
 for i = 2:floor(n_c/2)
   d_x(i) = d_x(i-1) * stretch;
   d_x(n_c+1-i) = d_x(i);
@@ -118,6 +118,7 @@ for i = 1:n_c
   x_n(i+1) = x_n(i) + d_x(i);
 end
 
+% Compute cell and face coordinates
 x_c           = line_avg(x_n);  % cell coordinates,       size = [1, n_c]
 x_if(1:n_c-1) = x_n(2:n_c);     % inner face coordinates, size = [1, n_c-1]
 
@@ -134,6 +135,8 @@ dy = dx * 2000.0;                % size = [1, n_c]
 dz = dx * 2000.0;                % size = [1, n_c]
 dv = dx .* dy .* dz;             % size = [1, n_c]
 sx = dy(1) * dz(1)               % size = [1, n_c-1]
+
+vof_if = line_avg(vof_c, w1, w2);
 
 %-------------------------------------------------------
 % Distribution of physical properties on numerical mesh
@@ -257,6 +260,15 @@ for step = 1:n_steps
     % Unit for b_u is: m/s^2 * kg/m^3 * m^3 = kg m/s^2 = N
     f_if = f_if + g * rho_if;   % kg/m^3 * m/s^2 = kg/(m^2 s^2) = N/m^3
 
+    % Face force due to mass transfer
+    % kg^2/s^2 * m^3/kg / m^2 = kg m / s^2 = N
+    % These lead to nothing, they were way
+    % too small compared to pressure forces
+    f_mt_if(1:n_c-1) = 0.0;
+    f_mt_if(10) = +mass_src^2 * (1/rho_water+1/rho_steam) / sx;
+    f_mt_af = [f_mt_if(1), f_mt_if, f_mt_if(n_c-1)];   % N
+    f_mt_c = line_avg(f_mt_af);
+
     % Expand forces to boundary faces too
     f_af = [f_if(1), f_if, f_if(n_c-1)];               % N/m^3
 
@@ -271,7 +283,7 @@ for step = 1:n_steps
     %
     %-----------------------------------------------------------------------
     f_c = line_avg(f_af);   % kg/m^3 * m/s^2 = kg/(m^2 s^2) = N/m^3
-    b_u = b_u + f_c .* dv;
+    b_u = b_u + f_c .* dv;  % made litte difference: + line_avg(f_mt_af);  % N
 
     % Under-relax forces in momentum equations
     % (a_u is already divided by urf_u above)
@@ -332,14 +344,20 @@ for step = 1:n_steps
     b_p = -diff(v_flux_af_n);
 
     % Add volumetric source (boiling)
-    vol_src_steam =  mass_src / rho_steam;  % volume of steam created
-    vol_src_water = -mass_src / rho_water;  % volume of water lost
-    b_p(10) = b_p(10) + vol_src_water;
-    b_p(11) = b_p(11) + vol_src_steam;
-    b_p(20) = b_p(20) - (vol_src_steam + vol_src_water);
+    for f = 1:n_c-1
+      c1 = f;
+      c2 = c1+1;
+      if(vof_if(f) > 0.001 && vof_if(f) < 0.999)
+        vol_src_steam =  mass_src / rho_steam;  % volume of steam created
+        vol_src_water = -mass_src / rho_water;  % volume of water lost
+        b_p(c1)  = b_p(c1) + vol_src_water;
+        b_p(c2)  = b_p(c2) + vol_src_steam;
+        b_p(n_c) = b_p(n_c) - (vol_src_steam + vol_src_water);
 
-    % Mimic convective outflow
-    u_east = mass_src / sx;
+        % Mimic convective outflow
+        u_east = mass_src / sx;
+      end
+    end
 
     if(mod(iter, iter_plot_int) == 0)
       plot_var(fig_u, 2, x_if, v_flux_if_n, 'Face Flux Before Correction',  ...
@@ -375,10 +393,10 @@ for step = 1:n_steps
     pp_x = gradient_p(x_n, x_c, w1, w2, pp_c);
 
     if(mod(iter, iter_plot_int) == 0)
-      plot_var(fig_p, 3, x_c, p_x,  'Pressure Gradient',  ...
-                                    iter / iter_plot_int);
-      plot_var(fig_p, 4, x_c, pp_x, 'Pressure Correction Gradient',  ...
+      plot_var(fig_p, 3, x_c, pp_x, 'Pressure Correction Gradient',  ...
                                    iter / iter_plot_int);
+      plot_var(fig_p, 4, x_c, p_x,  'Pressure Gradient',  ...
+                                    iter / iter_plot_int);
     end
 
     %-------------------------
