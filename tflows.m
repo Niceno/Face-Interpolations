@@ -53,9 +53,9 @@
 clear
 
 g        =  0.0;     % gravitational constant  [m/s^2]
-mass_src =  3.0;     % mass source             [kg/s]
-kappa    =  0.0;     % curvature               [1/m]
-d_vof    =  0.0333;  % for moving interface
+mass_src =  0.0;     % mass source             [kg/s]
+kappa    = 10.0;     % curvature               [1/m]
+d_vof    =  0.0; % 333;  % for moving interface
 
 u_west = 0.0;
 u_east = 0.0;
@@ -107,9 +107,15 @@ n_c = size(vof_c, 2);
 l    =   0.1           % lenght of the domain
 x_n  = l*(0:n_c)/n_c;  % node coordinates,       size = [1, n_c+1]
 
+% Uniform dx, just to compute dy and dz and sx
+dx = diff(x_n)
+dy = dx(1) * 2000.0;
+dz = dx(1) * 2000.0;
+sx = dy * dz;
+
 % Stretch the grid
 d_x(1:n_c) = 1;
-stretch = 1.0;
+stretch = 1.1;
 for i = 2:floor(n_c/2)
   d_x(i) = d_x(i-1) * stretch;
   d_x(n_c+1-i) = d_x(i);
@@ -132,10 +138,7 @@ w2 = 1.0 - w1;
 % test gradients: rtyuio
 
 dx = x_n(2:end) - x_n(1:end-1);  % size = [1, n_c]
-dy = dx * 2000.0;                % size = [1, n_c]
-dz = dx * 2000.0;                % size = [1, n_c]
-dv = dx .* dy .* dz;             % size = [1, n_c]
-sx = dy(1) * dz(1)               % size = [1, n_c-1]
+dv = dx * sx;                    % size = [1, n_c]
 
 %----------------
 % Initial values
