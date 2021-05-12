@@ -1,0 +1,99 @@
+Let's think about forces due to phase change.
+
+Now, the question was: shall I see phase change as a force in the first place?
+I would say: heck yes!  How else does a steam engine works if it wasn't using
+boiling and increase in volume as a force which drives the pistons?
+
+OK, said that, let's check the units a little bit.
+
+area:             A                    ...  m^2
+
+force:            f                    ...  N = kg m / s^2
+
+pressure:         p = f/A              ...  N / m^2 = kg / (m s^2)
+
+mass transfer:    m_dot                ...  kg / s
+
+volume transfer:  v_dot = m_dot / rho  ...  m^3 / s
+
+velocity          u = v_dot / A        ...  m / s
+
+----------------------------------------------------------------
+
+Guess:
+
+f = m_dot * u  ... kg/s * m/s = kg m / s^2 = N
+
+In addition, m_dot is constant for a system (or given for a system), but
+v_dot depends on the phase, it is much larger in steam than in water, since
+density of steam is so much smaller.
+
+That means that force excerted by mass transfer won't be the same at each
+of the phases.  (In numerical sense, it won't be the same at each of the
+cells surrounding a face at which mass transfer takes place.)
+
+v_dot_steam = m_dot / rho_steam
+v_dot_water = m_dot / rho_water
+
+f_water = m_dot * u_water = m_dot^2 / rho_water / A  ... kg m / s^2
+
+f_steam = m_dot * u_steam = m_dot^2 / rho_steam / A  ... kg m / s^2
+
+and they both act in the same direction.  That might sound a bit confusing
+at first, but imagine an interface at which mass transfer takes place, say
+boiling:
+
+
+         water                              steam
+                               |
+                               |
+         v_dot_water, small => | ==========> v_dot_steam, big
+      (sucks from the left)    |             (pushes to the right)
+                               |
+                          ---------->  m_dot
+                               |
+                           =-> | =-------------> u_steam, big and
+         u_water, small yet    |                 goes to the right
+         goes to the right     |
+                               |
+
+How stupid was to think that there are two forces?  There can be only one
+force at the interface, and that force is excerted on both phases.  This
+unique force could have the form:
+
+f = m_dot * (u_steam - u_water)  ... kg/s * m/s = kg m / s^2 = N
+
+u_steam - u_water = m_dot / rho_steam - m_dot / rho_water
+
+u_steam - u_water = m_dot * (1/ rho_steam - 1/ rho_water)
+
+f = m_dot^2 * (1/ rho_steam - 1/ rho_water) / A  ...  kg m / s^2 = N
+
+Numerically, this could be the force we define at faces, and then
+distribute over cells, like we do with other forces in proper collocated
+finite volume approach.
+
+Also numerically, linear system of discretized momentum equations has
+the form:
+
+[M]{u} = {f}  ...  [N]
+
+where:
+
+M  ...  kg / s
+u  ...  m / s
+f  ...  kg m / s^2 = N
+
+meaning that u = f / M
+
+So, to get volume fluxes on cell faces in Rhie and Chow, one multiplies
+forces and divides them with diagonals of matrix coefficients.
+
+M_steam ~ rho_steam * vol / dt  ...  kg / s, and is small
+M_water ~ rho_water * vol / dt  ...  kg / s, and is BIG
+
+The coefficients in Rhie and Chow, which are computed as vol/M are:
+
+vol / M_steam  ...  m^3 s / kg, and is BIG
+vol / M_water  ...  m^3 s / kg, and is small
+
