@@ -4,16 +4,16 @@
 # ( 3) step_plot_int, unsteady results plotting interval (0 to skip)
 # ( 4) eps_st,        steady state tolerance
     1.0e-1
-   10
-    1
-    1.0e-9 
+   20
+    2
+    1.0e-9
 #--------[ simple algorithm related ]--------
 # ( 5) n_iters,       number of iterations in simple algorithm
 # ( 6) iter_plot_int, iteration plotting interval (0 to skip)
 # ( 7) eps_dt,        outer iteration tolerance
    60
     0
-    1.0e-6
+    1.0e-8
 #--------[ momentum equation related ]--------
 # ( 8) urf_u,   under-relaxation factor for momentum
 # ( 9) u_iters, number of iterations for momentum solver
